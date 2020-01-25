@@ -1,0 +1,54 @@
+*.py[cod]
+
+# C extensions
+*.so
+
+# pycharm
+.idea/
+.idea
+
+# Packages
+*.egg
+*.egg-info
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+
+# Complexity
+output/*.html
+output/*/index.html
+
+# Sphinx
+docs/_build
+
+# Cookiecutter
+
+/update_docs.sh
+
+update_docs.sh
+
+# config settings
+.vscode
+.venv
+requirements.in
+.history
+src/cwapadminbot/cwapadminbot-old.py
+src/cwapadminbot/config.yaml
+
+# lists
+lists
