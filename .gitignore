@@ -45,7 +45,6 @@ update_docs.sh
 # config settings
 .vscode
 .venv
-requirements.in
 .history
 src/cwapadminbot/cwapadminbot-old.py
 src/cwapadminbot/config.yaml
