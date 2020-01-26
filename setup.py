@@ -21,6 +21,7 @@ setup(name='cwapadminbot', version=__version__, description='Telegram bot for ma
       long_description=long_description, url='https://github.com/scipio314/cwapadminbot',
       download_url='' + __version__, license='BSD',
       classifiers=['Development Status :: 3 - Alpha', 'Intended Audience :: Developers',
-        'Programming Language :: Python :: 3', ], keywords='', packages=find_packages(exclude=['docs', 'tests*']),
+                   'Programming Language :: Python :: 3', ], keywords='',
+      packages=find_packages(exclude=['docs', 'tests*']),
       include_package_data=True, author='scipio314', install_requires=install_requires,
       dependency_links=dependency_links, author_email='scipio314@gmail.com')
