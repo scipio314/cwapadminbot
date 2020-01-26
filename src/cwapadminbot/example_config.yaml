@@ -1,0 +1,24 @@
+TOKEN: # Enter bots token from @botfather
+OVERLORDS:
+  - # Enter your telegram user_id.
+  - # Enter additional user telegram id's that you trust to use any command.
+GROUPS:
+  crab_wiv_a_plan: # Enter group chat ids from Telegram. 
+  tutorial: # Replace the group names with your own.
+  admin:
+  video_stars:
+  boot_channel:
+STATUS:
+  admin:
+    - creator
+    - administrator
+  authorized:
+    - creator
+    - administrator
+    - member
+JSON: # Directory public facing .json file is stored on server.
+GOOGLE:
+  credentials: # Credential .json filename from google.
+  sheet: # Spreadsheet URL.
+  performance: # Spreadsheet URL.
+CWAP_LISTS: # Directory where @cwapbot stores lists.
