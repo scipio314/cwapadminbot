@@ -33,7 +33,6 @@ def loadlists():
         "joinrequests": joinrequests,
         "feedback": feedback,
         "videostars": videostars,
-
     }
     return lists
 
