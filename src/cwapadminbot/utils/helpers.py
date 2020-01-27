@@ -42,6 +42,7 @@ def add_member(username, user_id):
     lists = loadlists()
 
     all_ids = lists["members"]["all_ids"]
+    members = lists["members"]
 
     if user_id in all_ids:
         return
@@ -49,7 +50,7 @@ def add_member(username, user_id):
     lists["members"]["all_ids"].append(user_id)
     lists["members"]["all_usernames"].append(username)
 
-    all_members = {
+    new_member = {
         user_id: {
             "user_id": user_id,
             "username": username,
@@ -57,8 +58,10 @@ def add_member(username, user_id):
         }
     }
 
+    members.update(new_member)
+
     with open("all_members.txt", "wb") as file:
-        pickle.dump(all_members, file)
+        pickle.dump(members, file)
     return
 
 
