@@ -60,7 +60,7 @@ def add_member(username, user_id):
 
     members.update(new_member)
 
-    with open("all_members.txt", "wb") as file:
+    with open("members.txt", "wb") as file:
         pickle.dump(members, file)
     return
 
@@ -84,6 +84,6 @@ def remove_member(user_id):
 
     all_members = lists["members"]
 
-    with open("all_members.txt", "wb") as file:
+    with open("members.txt", "wb") as file:
         pickle.dump(all_members, file)
     return
