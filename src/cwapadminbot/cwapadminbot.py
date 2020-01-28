@@ -45,6 +45,14 @@ def _for_admin_only_message(bot, user_id, username):
                      .format(username))
 
 
+def _translate(messages, language_code):
+    try:
+        the_message = messages[language_code]
+    except KeyError:
+        the_message = messages["en"]
+    return the_message
+
+
 def welcome(update, context):
     """Welcomes new members to Tutorial group, Crab Wiv a Plan, and Video Stars."""
     bot = context.bot
@@ -52,45 +60,61 @@ def welcome(update, context):
     username = update.message.new_chat_members[-1].name
     user_id = update.message.new_chat_members[-1].id
     chat_name = update.message.chat.title
+    language_code = update.message.new_chat_members[-1].language_code
 
     if chat_id == config["GROUPS"]["tutorial"]:
-        bot.send_message(chat_id=chat_id,
-                         text="Hey {}, welcome to <b>{}</b>\n\n"
-                              "This group is made for new and returning members to learn the rules and the bots before "
-                              "we move them to the main group. To move to the main group each member here must "
-                              "demonstrate that they understand the rules and the bots.\n\n"
-                              "We have bot experts and admin here to help you through.\n\n"
-                              "Complete the following steps below and let an admin know when you've completed each step.\n"
-                              "\n1) Message both @cwapadminbot and @cwapbot in private.\n"
-                              "2) Signup for mega crab using @cwapadminbot. start by messaging @cwapadminbot /signup "
-                              "and follow the instructions.\n"
-                              "3) View a replay using /replay command with @cwapbot. Type /replay X (replace X with a"
-                              "number 1 to 10.\n"
-                              "4) Read this informational post on how we share replays and goes over rules. "
-                              "https://telegra.ph/Welcome-to-Crab-wiv-a-Plan-12-24\n"
-                              "5) Read our #MissionStatement\n\n"
-                              "Once you've finished with reading let us know when you're done and ask any questions. "
-                              "Task force assignments will come at a later date."
-                         .format(username, chat_name), parse_mode='HTML', reply_to_message_id=update.message.message_id)
-        return
+
+        en_text = "Hey {}, welcome to *{}*\n\n" \
+                  "This group is made for new and returning members to learn the rules and the bots before " \
+                  "we move them to the main group. To move to the main group each member here must " \
+                  "demonstrate that they understand the rules and the bots.\n\n" \
+                  "We have bot experts and admin here to help you through.\n\n" \
+                  "Complete the following steps below and let an admin know when you've completed each step.\n\n" \
+                  "1) Message both @cwapadminbot and @cwapbot in private.\n" \
+                  "2) Signup for mega crab using @cwapadminbot. start by messaging @cwapadminbot /signup " \
+                  "and follow the instructions.\n" \
+                  "3) View a replay using /replay command with @cwapbot. Type /replay X (replace X with a" \
+                  "number 1 to 10.\n" \
+                  "4) [Read this informational post on how we share replays and goes over rules.] \
+                  (https://telegra.ph/Welcome-to-Crab-wiv-a-Plan-12-24)" \
+                  "5) Read our #MissionStatement\n\n" \
+                  "Once you've finished with reading let us know when you're done and ask any questions. " \
+                  "Task force assignments will come at a later date." \
+            .format(escape_markdown(username), escape_markdown(chat_name))
+
+        tr_text = ""
 
     if chat_id == config["GROUPS"]["crab_wiv_a_plan"]:
-        bot.send_message(chat_id=chat_id,
-                         text="Hey {}, welcome to <b>{}</b>\n\n"
-                              "This is the main crab group. This is where all our communication takes place during "
-                              "Mega Crab. Welcome. Take a look at our pinned message for the most up to date announcemnts."
-                         .format(username, chat_name), parse_mode='HTML', reply_to_message_id=update.message.message_id)
+
+        en_text = "Hey {}, welcome to *{}*\n\n" \
+                  "This is the main crab group. This is where all our communication takes place during " \
+                  "Mega Crab. Welcome. Take a look at our pinned message for the most up to date announcemnts." \
+                      .format(escape_markdown(username), escape_markdown(chat_name))
+
+        tr_text = ""
+
         add_member(username, user_id)
 
     elif chat_id == config["GROUPS"]["video_stars"]:
-        bot.send_message(chat_id=chat_id,
-                         text="Hey {}, welcome to <b>{}</b>\n\n"
-                              "This group is meant to help the coordination among recording volunteers. "
-                              "This is where you will upload replays and submit them to the bot. Thank you a bunch for"
-                              "volunteering your time to help this group run. Even just 5 replays really helps!"
-                         .format(username, chat_name), parse_mode='HTML', reply_to_message_id=update.message.message_id)
 
-    return
+        en_text = "Hey {}, welcome to *{}*\n\n" \
+                  "This group is meant to help the coordination among recording volunteers. " \
+                  "This is where you will upload replays and submit them to the bot. Thank you a bunch for" \
+                  "volunteering your time to help this group run. Even just 5 replays really helps!" \
+                      .format(escape_markdown(username), escape_markdown(chat_name))
+
+        tr_text = ""
+
+    messages = {
+        "en": en_text,
+        "tr": tr_text,
+    }
+
+    the_message = _translate(messages, language_code)
+
+    bot.send_message(chat_id=chat_id,
+                     text=the_message,
+                     parse_mode='MARKDOWN', reply_to_message_id=update.message.message_id)
 
 
 def goodbye(update, context):
@@ -100,7 +124,6 @@ def goodbye(update, context):
 
     if chat_id == config["GROUPS"]["tutorial"]:
         bot.send_message(chat_id=chat_id, text="🎓", reply_to_message_id=update.message.message_id)
-
         return
 
     user_id = update.message.left_chat_member[-1].id
