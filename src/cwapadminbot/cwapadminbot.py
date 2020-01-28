@@ -220,18 +220,18 @@ def help(update, context):
 
     else:
         bot.send_message(chat_id=user_id,
-                        text="*Commands available to all users are:*\n\n"
-                            "`/ping`: returns Pong!\n\n"
-                            "`/signup A B C D`: Signup for next mega crab! Click /signup for more.\n\n"
-                            "`/editsignup A B C D E`: Use to edit signup details. Click /editsignup for more.\n\n"
-                            "`/removesignup A`: Remove an account (A) from signup. Click /removesignup for more.\n\n"
-                            "`/checksignup`: Checks which accounts you have signed up for mega crab.\n\n"
-                            "`/submitresults A B C D`: Submit results from previous Mega Crab\n\n"
-                            "`/editresults A B C D E`: Edit your results from previous Mega Crab\n\n"
-                            "`/removeresults A`: Remove your Mega Crab Results\n\n"
-                            "`/checkresults`: Check the results that you've submitted for Mega Crab\n\n"
-                            "`/feedback`: Submit any feedback to the Admins about the group.",
-                        parse_mode="markdown")
+                         text="*Commands available to all users are:*\n\n"
+                              "`/ping`: returns Pong!\n\n"
+                              "`/signup A B C D`: Signup for next mega crab! Click /signup for more.\n\n"
+                              "`/editsignup A B C D E`: Use to edit signup details. Click /editsignup for more.\n\n"
+                              "`/removesignup A`: Remove an account (A) from signup. Click /removesignup for more.\n\n"
+                              "`/checksignup`: Checks which accounts you have signed up for mega crab.\n\n"
+                              "`/submitresults A B C D`: Submit results from previous Mega Crab\n\n"
+                              "`/editresults A B C D E`: Edit your results from previous Mega Crab\n\n"
+                              "`/removeresults A`: Remove your Mega Crab Results\n\n"
+                              "`/checkresults`: Check the results that you've submitted for Mega Crab\n\n"
+                              "`/feedback`: Submit any feedback to the Admins about the group.",
+                         parse_mode="markdown")
 
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
@@ -510,7 +510,7 @@ def bootreminder(context):
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
                      text=the_message, parse_mode='MARKDOWN')
 
-    bot.send_message(chat_id=config["GROUPS"]["admin"], 
+    bot.send_message(chat_id=config["GROUPS"]["admin"],
                      text="The delinquents have been warned that they will get booted in 24 hours if not signed up.")
 
     return
@@ -617,7 +617,6 @@ def openresults(update, context):
 def autojson(context):
     """Creates a json file of CWAP results and saves to public facing server for outside sources to build a website."""
     # TODO 01/26/2020 16:56: Revise based on new results saving format.
-    bot = context.bot
 
     lists = loadlists()
     results = lists["results"]
@@ -953,7 +952,6 @@ def autosheet(context):
     """Automatically update the signup and results sheet. Currently on a 60s timer."""
     # TODO 01/26/2020 13:51: re-write based on a new signup and results list format.
     bot = context.bot
-    args = context.args
     global signuplist
     global resultslist
     global allmemberslist
@@ -1093,7 +1091,7 @@ def roster(update, context):
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
 
-    bot.send_message(chat_id=user_id, 
+    bot.send_message(chat_id=user_id,
                      text="<a href='{}'>Here is the link to the latest roster.</a>".format(config["GOOGLE"]["sheet"]),
                      parse_mode="HTML")
 
