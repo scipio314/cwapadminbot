@@ -8,3 +8,33 @@ to organize and run all competive teams.
 
 If you are interested in joining and becoming a member of a CWAP group please refer to the 
 [@joincwap](https://t.me/joincwap) Telegram channel.
+
+## How to contribute
+
+#### Translations
+
+If you want to translate a message into your native language, you can look at the [cwapadminbot.py file](https://github.com/scipio314/cwapadminbot/blob/master/src/cwapadminbot/cwapadminbot.py) and look for message you'd like translated. There is an edit button on github where you can go into edit mode. Any changes made are reviewed by myself before being implemented.
+
+#### Adding or modifying functions
+
+Here is how you can create and modify functions:
+
+1. Fork the repository to your GitHub account.
+2. Clone your forked repository to your computer.
+
+```bash
+git clone https://github.com/<your username>/cwapadminbot
+cd cwapadminbot
+```
+
+3. Add a track to the original repository:
+
+```bash
+git remote add upstream https://github.com/<your username>/cwapadminbot
+```
+
+4. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
