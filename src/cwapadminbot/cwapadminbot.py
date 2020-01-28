@@ -532,18 +532,18 @@ def autoboot(context):
                 bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
                 bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
                 bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id,
-                                        can_send_messages=True,
-                                        can_send_media_messages=True,
-                                        can_add_web_page_previews=True,
-                                        can_send_other_messages=True)
+                                         can_send_messages=True,
+                                         can_send_media_messages=True,
+                                         can_add_web_page_previews=True,
+                                         can_send_other_messages=True)
                 bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id,
-                                            can_send_messages=True,
-                                            can_send_media_messages=True,
-                                            can_add_web_page_previews=True,
-                                            can_send_other_messages=True)
+                                         can_send_messages=True,
+                                         can_send_media_messages=True,
+                                         can_add_web_page_previews=True,
+                                         can_send_other_messages=True)
                 bot.send_message(chat_id=user_id,
-                                    text="Hey, we removed you from the crab group because you didn't sign up in time.\n\n"
-                                        "Contact an admin to be put on our waitlist for next month.")
+                                 text="Hey, we removed you from the crab group because you didn't sign up in time.\n\n"
+                                      "Contact an admin to be put on our waitlist for next month.")
                 remove_member(user_id)
             except:
                 continue
