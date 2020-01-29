@@ -38,3 +38,6 @@ git remote add upstream https://github.com/<your username>/cwapadminbot
 ```bash
 pip install -r requirements.txt
 ```
+
+Once installed you can begin making code changes. When your changes are finished you can push to your github and start
+a pull request. I will review the changes and if no comments I will accept them.
