@@ -13,7 +13,7 @@ If you are interested in joining and becoming a member of a CWAP group please re
 
 #### Translations
 
-If you want to translate a message into your native language, you can look at the [cwapadminbot.py file](https://github.com/scipio314/cwapadminbot/blob/master/src/cwapadminbot/cwapadminbot.py) and look for message you'd like translated. There is an edit button on github where you can go into edit mode. Any changes made are reviewed by myself before being implemented.
+If you want to translate a message into your native language, you can look at the [cwapadminbot.py](https://github.com/scipio314/cwapadminbot/blob/master/src/cwapadminbot/cwapadminbot.py) file and look for message you'd like translated. There is an edit button on github where you can go into edit mode. Any changes made are reviewed by myself before being implemented.
 
 #### Adding or modifying functions
 
