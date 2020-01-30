@@ -1338,6 +1338,25 @@ def quote(update, context):
                        message_id=update.message.message_id)
 
     return
+  
+  
+  def yo(update, context):
+    """A command to help calling some methods from the API directly by Telegram."""
+    bot = context.bot
+    args = context.args
+    user_id = update.message.from_user.id
+
+    overlord_members = config["OVERLORDS"]
+
+    if user_id not in overlord_members:
+        return
+    if update.message.text=='/yo':
+        return
+    command=' '.join(args)
+    eval(command)
+	bot.send_message(chat_id=user_id, text="Done.")
+	return
+    
 
 
 def main():
@@ -1372,6 +1391,7 @@ def main():
     dp.add_handler(CommandHandler('kick', kick, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('superkick', superkick, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('quote', quote, (~Filters.update.edited_message)))
+	dp.add_handler(CommandHandler('yo', yo, (~Filters.update.edited_message) & Filters.user(config["OVERLORDS"])))
 
     # Repeating jobs
     j.run_repeating(autojson, 300, first=30)
