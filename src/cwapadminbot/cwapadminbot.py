@@ -1338,10 +1338,10 @@ def quote(update, context):
                        message_id=update.message.message_id)
 
     return
-  
-  
+
+
 def say(update, context):
-	"""A command to help calling some methods from the API directly by Telegram."""
+    """A command to help calling some methods from the API directly by Telegram."""
     bot = context.bot
     args = context.args
     user_id = update.message.from_user.id
@@ -1356,7 +1356,7 @@ def say(update, context):
     eval(command)
     bot.send_message(chat_id=user_id, text="Done.")
     return
-    
+
 
 def main():
 
