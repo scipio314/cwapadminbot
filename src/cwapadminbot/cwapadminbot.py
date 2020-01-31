@@ -1354,8 +1354,8 @@ def say(update, context):
         return
     command=' '.join(args)
     eval(command)
-	bot.send_message(chat_id=user_id, text="Done.")
-	return
+    bot.send_message(chat_id=user_id, text="Done.")
+    return
     
 
 def main():
@@ -1390,7 +1390,7 @@ def main():
     dp.add_handler(CommandHandler('kick', kick, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('superkick', superkick, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('quote', quote, (~Filters.update.edited_message)))
-	dp.add_handler(CommandHandler('say', say, (~Filters.update.edited_message) & Filters.user(config["OVERLORDS"])))
+    dp.add_handler(CommandHandler('say', say, (~Filters.update.edited_message) & Filters.user(config["OVERLORDS"])))
 
     # Repeating jobs
     j.run_repeating(autojson, 300, first=30)
