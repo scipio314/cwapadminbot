@@ -1350,14 +1350,13 @@ def say(update, context):
 
     if user_id not in overlord_members:
         return
-    if update.message.text=='/yo':
+    if update.message.text=='/say':
         return
     command=' '.join(args)
     eval(command)
 	bot.send_message(chat_id=user_id, text="Done.")
 	return
     
-
 
 def main():
 
