@@ -30,13 +30,13 @@ cd cwapadminbot
 3. Add a track to the original repository:
 
 ```bash
-git remote add upstream https://github.com/<your username>/cwapadminbot
+git remote add upstream https://github.com/cwapadminbot
 ```
 
 4. Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 ```
 
 Once installed you can begin making code changes. When your changes are finished you can push to your github and start
