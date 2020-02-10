@@ -17,27 +17,4 @@ If you want to translate a message into your native language, you can look at th
 
 #### Adding or modifying functions
 
-Here is how you can create and modify functions:
-
-1. Fork the repository to your GitHub account.
-2. Clone your forked repository to your computer.
-
-```bash
-git clone https://github.com/<your username>/cwapadminbot
-cd cwapadminbot
-```
-
-3. Add a track to the original repository:
-
-```bash
-git remote add upstream https://github.com/cwapadminbot
-```
-
-4. Install dependencies:
-
-```bash
-pip install -r requirements.txt -r requirements-dev.txt
-```
-
-Once installed you can begin making code changes. When your changes are finished you can push to your github and start
-a pull request. I will review the changes and if no comments I will accept them.
+Please read the [how to contribute guide](contributing.md) to see how to make changes in Python code.
