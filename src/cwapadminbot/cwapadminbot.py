@@ -1346,13 +1346,9 @@ def say(update, context):
     args = context.args
     user_id = update.message.from_user.id
 
-    overlord_members = config["OVERLORDS"]
-
-    if user_id not in overlord_members:
+    if update.message.text == '/say':
         return
-    if update.message.text=='/say':
-        return
-    command=' '.join(args)
+    command = ' '.join(args)
     eval(command)
     bot.send_message(chat_id=user_id, text="Done.")
     return
@@ -1360,37 +1356,47 @@ def say(update, context):
 
 def main():
 
-    # Add handlers
+    # Member commands
     dp.add_handler(MessageHandler(Filters.status_update.new_chat_members, welcome))
     dp.add_handler(MessageHandler(Filters.status_update.left_chat_member, goodbye))
     dp.add_handler(CommandHandler('start', start, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('ping', ping, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('help', help, (~Filters.update.edited_message)))
+    dp.add_handler(CommandHandler('feedback', feedback, (~Filters.update.edited_message)))
+    dp.add_handler(CommandHandler('replay', replay, (~Filters.update.edited_message)))
+    dp.add_handler(CommandHandler('performance', performance, (~Filters.update.edited_message)))
+    dp.add_handler(CommandHandler('quote', quote, (~Filters.update.edited_message)))
+
+    # Admin commands
     dp.add_handler(CommandHandler('joinrequest', joinrequest, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('waitlist', waitlist, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('closesignup', closesignup, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('opensignup', opensignup, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('offline', offline, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('online', online, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('checkboot', checkboot, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('setautoboot', setautoboot, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('closeresults', closeresults, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('openresults', openresults, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('qualified', qualified, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('action', action, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('feedback', feedback, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('checkfeedback', checkfeedback, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('replay', replay, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('sheet', sheet, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('plot', plot, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('roster', roster, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('performance', performance, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('signupstatus', signupstatus, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('resetlists', resetlists, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('kick', kick, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('superkick', superkick, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('quote', quote, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('say', say, (~Filters.update.edited_message) & Filters.user(config["OVERLORDS"])))
+
+    # Overlord commands
+    dp.add_handler(CommandHandler('offline', offline,
+                                  ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
+
+    dp.add_handler(CommandHandler('online', online, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
+
+    dp.add_handler(CommandHandler('resetlists', resetlists,
+                                  ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
+
+    dp.add_handler(CommandHandler('action', action, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
+
+    dp.add_handler(CommandHandler('say', say, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
 
     # Repeating jobs
     j.run_repeating(autojson, 300, first=30)
