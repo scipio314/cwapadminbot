@@ -1388,14 +1388,10 @@ def main():
     # Overlord commands
     dp.add_handler(CommandHandler('offline', offline,
                                   ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
-
     dp.add_handler(CommandHandler('online', online, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
-
     dp.add_handler(CommandHandler('resetlists', resetlists,
                                   ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
-
     dp.add_handler(CommandHandler('action', action, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
-
     dp.add_handler(CommandHandler('say', say, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
 
     # Repeating jobs
