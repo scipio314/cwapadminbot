@@ -47,6 +47,7 @@ update_docs.sh
 .venv
 .history
 src/cwapadminbot/cwapadminbot-old.py
+src/cwapadminbot/signup-old.py
 src/cwapadminbot/config.yaml
 
 # lists
