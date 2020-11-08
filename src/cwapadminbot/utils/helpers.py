@@ -87,3 +87,27 @@ def remove_member(user_id):
     with open("members.txt", "wb") as file:
         pickle.dump(all_members, file)
     return
+
+
+def signup_user(user_data):
+    """Log signup data for user."""
+    user_id = user_data['User_ID']
+    lists = loadlists()
+    members = lists["members"]
+
+    all_ids = members["all_ids"]
+
+    if user_id not in all_ids:
+        return
+
+    lists["members"]["boot_ids"].remove(user_id)
+
+    csv = "{},{},{}".format(user_data['Username'], user_data['IGN'], user_data['VIDEOSTAR'])
+
+    members[user_id]["signed_up"] = True
+    signup_data = {
+        "IGN": user_data['IGN'],
+        "VIDEOSTAR": user_data["VIDEOSTAR"],
+        "CSV": csv
+    }
+    members[user_id]["signup_data"].append(signup_data)

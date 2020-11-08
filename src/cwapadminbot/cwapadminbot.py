@@ -1,6 +1,5 @@
 """A telegram bot to efficiently run Crab Wiv a Plan."""
 import datetime
-import json
 import logging
 import pickle
 import shutil
@@ -10,14 +9,13 @@ from random import choice, randint
 import gspread
 import requests
 import yaml
+from cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user
 from oauth2client.service_account import ServiceAccountCredentials
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           ConversationHandler, Filters, MessageHandler,
                           Updater)
 from telegram.utils.helpers import escape_markdown
-
-from cwapadminbot.utils.helpers import add_member, loadlists, remove_member
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -63,7 +61,6 @@ def welcome(update, context):
     language_code = update.message.new_chat_members[-1].language_code
 
     if chat_id == config["GROUPS"]["tutorial"]:
-
         en_text = "Hey {}, welcome to *{}*\n\n" \
                   "This group is made for new and returning members to learn the rules and the bots before " \
                   "we move them to the main group. To move to the main group each member here must " \
@@ -89,7 +86,7 @@ def welcome(update, context):
         en_text = "Hey {}, welcome to *{}*\n\n" \
                   "This is the main crab group. This is where all our communication takes place during " \
                   "Mega Crab. Welcome. Take a look at our pinned message for the most up to date announcemnts." \
-                      .format(escape_markdown(username), escape_markdown(chat_name))
+            .format(escape_markdown(username), escape_markdown(chat_name))
 
         tr_text = ""
 
@@ -101,7 +98,7 @@ def welcome(update, context):
                   "This group is meant to help the coordination among recording volunteers. " \
                   "This is where you will upload replays and submit them to the bot. Thank you a bunch for" \
                   "volunteering your time to help this group run. Even just 5 replays really helps!" \
-                      .format(escape_markdown(username), escape_markdown(chat_name))
+            .format(escape_markdown(username), escape_markdown(chat_name))
 
         tr_text = ""
 
@@ -374,6 +371,128 @@ def opensignup(update, context):
     return
 
 
+IGN, VIDEOSTAR, CONFIRMATION = range(3)
+
+
+def signup(update, context):
+    """Enters into a conversation using the /signup command.
+
+    Conversation asks the user for their "in game name", if they'd like to volunteer recording videos,
+    and then sends a confirmation button."""
+    bot = context.bot
+    lists = loadlists()
+
+    username = update.message.from_user.name
+    user_id = update.message.from_user.id
+    context.user_data['Username'] = username
+    context.user_data['User_ID'] = user_id
+    chat_id = update.message.chat_id
+    user_data = context.user_data
+
+    authorized = lists["members"][user_id]["authorized"]
+
+    if not authorized:
+        return _unauthorized_message(bot, user_id, username)
+
+    if user_id != chat_id:
+        bot.send_message(chat_id=user_id,
+                         text="Hey, sorry. Send /signup again to me in this private chat. "
+                              "It won't work in a group chat.")
+        bot.delete_message(chat_id=chat_id,
+                           message_id=update.message.message_id)
+        return ConversationHandler.END
+
+    bot.send_message(chat_id=user_id,
+                     text="What is the account name?")
+    return IGN
+
+
+def _signup_ign(update, context):
+    """Process the in game name from user and ask if user wants to volunteer to record."""
+    bot = context.bot
+    name = update.message.text
+    context.user_data['IGN'] = name
+    user_id = update.message.from_user.id
+
+    volunteer_keyboard = [
+        [InlineKeyboardButton('Yes', callback_data='Yes'), InlineKeyboardButton('No', callback_data='No')]]
+    volunteer_markup = InlineKeyboardMarkup(volunteer_keyboard)
+
+    bot.send_message(chat_id=user_id,
+                     text="Are you interested in recording and uploading videos?",
+                     reply_markup=volunteer_markup)
+    return VIDEOSTAR
+
+
+def _videostar(update, context):
+    """Process the video volunteer button press."""
+    query = update.callback_query
+    context.user_data['VIDEOSTAR'] = query.data
+    _signup_confirmation(update, context)
+    return CONFIRMATION
+
+
+def _signup_confirmation(update, context):
+    """Send a confirmation button to the user."""
+    bot = context.bot
+    user_data = context.user_data
+    user_id = context.user_data['User_ID']
+
+    confirmation_keyboard = [[InlineKeyboardButton('Confirm', callback_data='Confirm')],
+                             [InlineKeyboardButton('Redo', callback_data='Redo')]]
+
+    confirmation_markup = InlineKeyboardMarkup(confirmation_keyboard)
+
+    bot.send_message(chat_id=user_id,
+                     text="Please Confirm the following submission:\n\n"
+                          "<code>IGN:</code> <b>{}</b> \n"
+                          "<code>Volunteer to Record:</code> <b>{}</b> \n\n"
+                     .format(user_data['IGN'], user_data['VIDEOSTAR'], ),
+                     parse_mode='HTML',
+                     reply_markup=confirmation_markup)
+    return
+
+
+def _process_confirmation_button(update, context):
+    """Process the 'Confirm' or 'Redo' button pressed by user."""
+    bot = context.bot
+    query = update.callback_query
+    user_id = query.from_user.id
+    the_choice = query.data
+    user_data = context.user_data
+
+    if the_choice == 'Confirm':
+        signup_user(user_data)
+
+        if context.user_data["VIDEOSTAR"] == "Yes":
+            invite_link = bot.get_chat(chat_id=config["GROUPS"]["video_stars"]).invite_link
+            bot.send_message(chat_id=user_id,
+                             text="In case you're not in the group already here is a link to join our recording "
+                                  "volunteers group: {}".format(invite_link))
+        bot.send_message(chat_id=user_id,
+                         text="Thanks your signup has been saved.")
+    elif the_choice == 'Redo':
+        bot.send_message(chat_id=user_id,
+                         text="Click /signup to start over.")
+    return ConversationHandler.END
+
+
+def cancel(update, context):
+    """End conversation with the /cancel command."""
+    return ConversationHandler.END
+
+
+signup_handler = ConversationHandler(
+    entry_points=[CommandHandler('signup', signup, (~Filters.update.edited_message))],
+    states={
+        IGN: [MessageHandler(Filters.text, _signup_ign, pass_user_data=True)],
+        VIDEOSTAR: [CallbackQueryHandler(_videostar, pass_user_data=True)],
+        CONFIRMATION: [CallbackQueryHandler(_signup_confirmation, pass_user_data=True)],
+    },
+    fallbacks=[CommandHandler('cancel', cancel)]
+)
+
+
 def offline(update, context):
     """Notify all groups that bot is going offline using /offline command."""
     bot = context.bot
@@ -404,9 +523,9 @@ def online(update, context):
     bot = context.bot
     user_id = update.message.from_user.id
 
-    overlord_members = config["OVERLORDS"]
+    overlords = config["OVERLORDS"]
 
-    if user_id not in overlord_members:
+    if user_id not in overlords:
         return
 
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
@@ -456,7 +575,7 @@ def setautoboot(update, context):
     year = int(args[0])
     month = int(args[1])
     day = int(args[2])
-    reminder_day = int(day-1)
+    reminder_day = int(day - 1)
     hour = int(args[3])
 
     reminder_date = datetime.datetime(year, month, reminder_day, hour, 0, 0, 0)
@@ -503,7 +622,6 @@ def bootreminder(context):
     i = 1
     the_message = 'The following have been warned to signup in the next 24 hours or get booted:\n'
     for user_id in boot_ids:
-
         the_message += '\n{}) {}'.format(i, escape_markdown(members[user_id]["username"]))
         i += 1
 
@@ -558,203 +676,6 @@ def autoboot(context):
                      text=the_message, parse_mode='MARKDOWN')
 
     bot.send_message(chat_id=config["GROUPS"]["admin"], text="I have booted the members.")
-
-    return
-
-
-def closeresults(update, context):
-    """Closes result submissions using the /closeresults command."""
-    # TODO 01/26/2020 16:54: Update on new results system.
-    bot = context.bot
-    user_id = update.message.from_user.id
-
-    overlord_members = config["OVERLORDS"]
-
-    if user_id not in overlord_members:
-        return
-
-    dp.remove_handler(results_handler)
-    dp.remove_handler(editresults_handler)
-    dp.remove_handler(removal_handler)
-    dp.remove_handler(checkresults_handler)
-
-    bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
-                     text="Result submissions have been turned off.")
-    bot.send_message(chat_id=config["GROUPS"]["crab_wiv_a_plan"],
-                     text="Result submissions have been turned off.")
-    bot.send_message(chat_id=user_id,
-                     text="Result submissions have been turned off.")
-
-    return
-
-
-def openresults(update, context):
-    """Opens result entry for members using the /openresults command."""
-    # TODO 01/26/2020 16:55: Update on new results system.
-    bot = context.bot
-    user_id = update.message.from_user.id
-
-    overlord_members = config["OVERLORDS"]
-
-    if user_id not in overlord_members:
-        return
-
-    dp.add_handler(results_handler)
-    dp.add_handler(editresults_handler)
-    dp.add_handler(removal_handler)
-    dp.add_handler(checkresults_handler)
-
-    bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
-                     text="Result submissions have been opened.")
-    bot.send_message(chat_id=config["GROUPS"]["crab_wiv_a_plan"],
-                     text="Result submissions have been opened.")
-    bot.send_message(chat_id=user_id,
-                     text="Result submissions have been opened.")
-
-    return
-
-
-def autojson(context):
-    """Creates a json file of CWAP results and saves to public facing server for outside sources to build a website."""
-    # TODO 01/26/2020 16:56: Revise based on new results saving format.
-
-    lists = loadlists()
-    results = lists["results"]
-
-    cwap_results = {
-        "event_type": "crab",
-        "event_name": "Scorcher Mega Crab",
-        "leaderboard_local_time": "0000-00-00 00:00:00",
-        "event_visible_time": "0000-00-00 00:00:00",
-        "event_start_time": "0000-00-00 00:00:00",
-        "event_end_time": "0000-00-00 00:00:00",
-        "global_scores": [
-        ]
-    }
-
-    results.sort(reverse=True, key=lambda x: float(x[4]))
-
-    for result in results:
-        destroyed_percent = round(result[4] % 1, 5)
-        rank = int(results.index(result)) + 1
-        if result[5] == "Yes":
-            local_no_one = True
-        else:
-            local_no_one = False
-
-        global_score = {
-            "ranking": rank,
-            "country_code": result[3],
-            "tz_offset": local_no_one,
-            "destroyed_percent": destroyed_percent,
-            "avatar_name": result[2],
-            "avatar_id": result[0],
-            "stage": int(result[4])
-        }
-        cwap_results["global_scores"].append(global_score)
-
-    save_json = config["JSON"]
-    with open(save_json, 'w') as fp:
-        json.dump(cwap_results, fp)
-
-    return
-
-
-def qualified(update, context):
-    """Creates a list of qualified CWAP members with the /qualifed command."""
-    # TODO 01/26/2020 13:53: re-write based on a new signup and results list format.
-    bot = context.bot
-    global videostarslist
-    global signuplist
-    global allmemberslist
-    user_id = update.message.from_user.id
-    member_status = bot.get_chat_member(cwap_id, user_id).status
-
-    lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
-
-    if not admin:
-        return _for_admin_only_message(bot, user_id, username)
-
-    # qualified_ids = []
-    video_qualified_usernames = []
-    all_qualified_usernames = []
-    for videostar in videostarslist:
-        if videostar[1] >= 10:
-            video_qualified_usernames.append(videostar[0])
-            all_qualified_usernames.append(videostar[0])
-            # qualified_ids.append(videostar[1])
-
-    entry_list = [entry for entry in signuplist if entry[0] not in video_qualified_usernames]
-    # entry_list = [entry for entry in signuplist if entry[1] not in qualified_ids]
-
-    fast_qualified_usernames = []
-    for member in entry_list[:25]:
-        fast_qualified_usernames.append(member[0])
-        all_qualified_usernames.append(member[0])
-        # qualified_ids.append(member[1])
-
-    entry_list = [entry for entry in signuplist if entry[0] not in all_qualified_usernames]
-    # entry_list = [entry for entry in signuplist if entry[1] not in qualified_ids]
-
-    entry_list.sort(reverse=True, key=lambda x: float(x[4]))
-
-    top_qualified_usernames = []
-    for member in entry_list[:50]:
-        top_qualified_usernames.append(member[0])
-        all_qualified_usernames.append(member[0])
-        # qualified_ids.append(member[1])
-
-    unqualified_usernames = [user[0] for user in allmemberslist if user[0] not in all_qualified_usernames]
-
-    unqualified_admin_usernames = []
-    for member in unqualified_usernames:
-        member_id = get_userid(member)
-
-        member_status = bot.get_chat_member(cwap_id, member_id).status
-        if member_status in admin_status:
-            unqualified_admin_usernames.append(member)
-
-    unqualified_usernames = [user for user in unqualified_usernames if user not in unqualified_admin_usernames]
-
-    # unqualified_ids = [user[1] for user in allmemberslist if user[1] not in qualified_ids]
-
-    # qualifiedlist = list(map(list, zip(qualified_usernames, qualified_ids)))
-    # unqualifiedlist = list(map(list, zip(unqualified_usernames, unqualified_ids)))
-
-    the_text = "The following qualify for recording at least 10 videos last month:"
-
-    i = 1
-    for member in video_qualified_usernames:
-        the_text += "\n{} - {}".format(i, member)
-        i += 1
-
-    the_text += "\n\nThe following qualify for being in the first 25 to signup:"
-
-    i = 1
-    for member in fast_qualified_usernames:
-        the_text += "\n{} - {}".format(i, member)
-        i += 1
-
-    the_text += "\n\nThe following qualify for finishing in the top 50 of this group:"
-
-    i = 1
-    for member in top_qualified_usernames:
-        the_text += "\n{} - {}".format(i, member)
-        i += 1
-
-    bot.send_message(chat_id=user_id,
-                     text=the_text)
-
-    the_text = "The following members did not meet the minimum qualifications to play mega crab this month:\n"
-
-    i = 1
-    for member in unqualified_usernames:
-        the_text += "\n{} - {}".format(i, member)
-        i += 1
-
-    bot.send_message(chat_id=user_id,
-                     text=the_text)
 
     return
 
@@ -863,18 +784,9 @@ def sheet(update, context):
     """Updates the google doc sheet containing signup and result information. Done using the /sheet command."""
     # TODO 01/26/2020 13:52: re-write based on a new signup and results list format.
     bot = context.bot
-    args = context.args
-    global signuplist
-    global resultslist
-    global allmemberslist
-    global overlord_members
-    global cwap_id
-    global admin_status
 
     lists = loadlists()
-    signups = lists["signups"]
-    results = lists["results"]
-    all_members = lists["members"]
+    members = lists["members"]
     overlords = config["OVERLORDS"]
 
     if update.message.from_user.id not in overlords:
@@ -1074,7 +986,7 @@ def plot(update, context):
     plt.userplot(user)
 
     caption = "scatter plot of all replay requests for {}".format(user)
-    bot.send_photo(chat_id=user_id, photo=open('./Img/Users/'+user+'_scatt.png', 'rb'), caption=caption)
+    bot.send_photo(chat_id=user_id, photo=open('./Img/Users/' + user + '_scatt.png', 'rb'), caption=caption)
     return
 
 
@@ -1134,6 +1046,10 @@ def performance(update, context):
     return
 
 
+def signup(update, context):
+    bot = context.bot
+
+
 def signupstatus(update, context):
     """Returns a current list of members not signed up."""
     bot = context.bot
@@ -1166,12 +1082,12 @@ def signupstatus(update, context):
             j += 1
 
     member_message = "A total of *{} commanders have not signed up for Mega Crab* and will be booted on *{}*.\n\n" \
-                     "Here is the full list of members to be removed:\n".format(i-1, boot_date_fmt)
+                     "Here is the full list of members to be removed:\n".format(i - 1, boot_date_fmt)
     member_message += boot_users
     member_message += "\n\nUse the /signup command to register your account before you are booted!"
 
     admin_message = "A total of *{} Admin have not signed up for Mega Crab*. " \
-                    "Signup if you plan to play Mega Crab.\n\n".format(j-1)
+                    "Signup if you plan to play Mega Crab.\n\n".format(j - 1)
     admin_message += admin_users
     admin_message += "Admin will not be booted, use the /signup command if you plan to play."
 
@@ -1207,9 +1123,9 @@ def resetlists(update, context):
 
     time_stamp = str(int(time.time()))
 
-    shutil.copy('oldsignups.txt', './Old Lists/oldsignups - '+time_stamp+'.txt')
-    shutil.copy('results.txt', './Old Lists/results - '+time_stamp+'.txt')
-    shutil.copy('signups.txt', './Old Lists/signups - '+time_stamp+'.txt')
+    shutil.copy('oldsignups.txt', './Old Lists/oldsignups - ' + time_stamp + '.txt')
+    shutil.copy('results.txt', './Old Lists/results - ' + time_stamp + '.txt')
+    shutil.copy('signups.txt', './Old Lists/signups - ' + time_stamp + '.txt')
     shutil.copy('{}videostarspickle.txt'.format(config["CWAP_LISTS"]), 'videostarspickle.txt')
 
     oldsignups = signups
@@ -1308,7 +1224,7 @@ def superkick(update, context):
     remove_member(boot_id)
 
     the_message = '{} has been *SUPER KICKED* from Crab Wiv A Plan, Tutorial Group, and VideoStars.' \
-                  .format(escape_markdown(username))
+        .format(escape_markdown(username))
 
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
                      text=the_message,
@@ -1355,7 +1271,6 @@ def say(update, context):
 
 
 def main():
-
     # Member commands
     dp.add_handler(MessageHandler(Filters.status_update.new_chat_members, welcome))
     dp.add_handler(MessageHandler(Filters.status_update.left_chat_member, goodbye))
@@ -1366,6 +1281,7 @@ def main():
     dp.add_handler(CommandHandler('replay', replay, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('performance', performance, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('quote', quote, (~Filters.update.edited_message)))
+    dp.add_handler(signup_handler)
 
     # Admin commands
     dp.add_handler(CommandHandler('joinrequest', joinrequest, (~Filters.update.edited_message)))
@@ -1401,6 +1317,7 @@ def main():
     # Start the Bot
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == '__main__':
     main()

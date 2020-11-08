@@ -1,3 +1,4 @@
+from cwapadminbot.utils.helpers import loadlists
 IGN_SIGNUP, COUNTRY_SIGNUP, STAGE_SIGNUP, DESTROY_SIGNUP, VIDEOSTAR_SIGNUP, CANCEL, AUTOSIGNUP_SIGNUP, SIGNUP_CONFIRM_SIGNUP, PROCESS_EDIT_SIGNUP, EDIT_INFORMATION_SIGNUP = range(10)
 
 
@@ -32,11 +33,9 @@ def save_signup(user_data):
 
 def signup(update, context):
     bot = context.bot
-    global signuplist
-    global resultslist
-    global authorized_status
-    global cwap_id
-    global tutorial_id
+
+    signups = loadlists()["signups"]
+
     username = update.message.from_user.name
     user_id = update.message.from_user.id
     context.user_data['Username'] = username
@@ -281,9 +280,8 @@ signup_handler = ConversationHandler(
             PROCESS_EDIT_SIGNUP: [CallbackQueryHandler(process_edit, pass_user_data=True)],
             EDIT_INFORMATION_SIGNUP: [MessageHandler(Filters.text, update_signup, pass_user_data=True)],
         },
-    fallbacks=[CommandHandler('cancel', cancel),
-               CallbackQueryHandler(cancel, pass_user_data=True)]
-    )
+    fallbacks=[CommandHandler('cancel', cancel))
+
 dispatcher.add_handler(signup_handler)
 
 ACCOUNT_REMOVAL = range(1)
