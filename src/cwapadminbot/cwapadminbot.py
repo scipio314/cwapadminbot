@@ -16,7 +16,7 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           Updater)
 from telegram.utils.helpers import escape_markdown
 
-from .utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group
+from .utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -783,14 +783,14 @@ def replay(update, context):
 
 def sheet(update, context):
     """Updates the google doc sheet containing signup and result information. Done using the /sheet command."""
-    # TODO 01/26/2020 13:52: re-write based on a new signup and results list format.
     bot = context.bot
+    user_id = update.message.from_user.id
 
     lists = loadlists()
     members = lists["members"]
     overlords = config["OVERLORDS"]
 
-    if update.message.from_user.id not in overlords:
+    if user_id not in overlords:
         return
 
     scope = ['https://spreadsheets.google.com/feeds']
@@ -805,9 +805,11 @@ def sheet(update, context):
     signup_cell_list = signup_ws.range('A1:A150')
 
     i = 0
-    for entry in signuplist:
-        signup_cell_list[i].value = entry[-1]
-        i += 1
+    for member in members:
+        if member["signed_up"]:
+            for signup_entry in member["signup_data"]:
+                signup_cell_list[i].value = signup_entry["CSV"]
+                i += 1
 
     while i < 150:
         signup_cell_list[i].value = ''
@@ -816,33 +818,16 @@ def sheet(update, context):
     # Update in batch
     signup_ws.update_cells(signup_cell_list)
 
-    results_ws = sh.worksheet("results_csv")
-    results_cell_list = results_ws.range('A1:A150')
-
-    i = 0
-    for entry in resultslist:
-        results_cell_list[i].value = entry[-1]
-        i += 1
-
-    while i < 150:
-        results_cell_list[i].value = ''
-        i += 1
-
-    # Update in batch
-    results_ws.update_cells(results_cell_list)
-
     users_ws = sh.worksheet("member_list")
     members_cell_list = users_ws.range('A1:A150')
     admin_cell_list = users_ws.range('B1:B150')
 
     i = 0
     j = 0
-    for entry in allmemberslist:
-        members_cell_list[i].value = entry[0]
-        user_id = entry[1]
-        member_status = bot.get_chat_member(cwap_id, user_id).status
-        if member_status in admin_status:
-            admin_cell_list[j].value = entry[0]
+    for member in members:
+        members_cell_list[i].value = member["username"]
+        if member["is_admin"]:
+            admin_cell_list[j].value = member["username"]
             j += 1
         i += 1
 
@@ -863,14 +848,8 @@ def sheet(update, context):
 
 def autosheet(context):
     """Automatically update the signup and results sheet. Currently on a 60s timer."""
-    # TODO 01/26/2020 13:51: re-write based on a new signup and results list format.
-    bot = context.bot
-    global signuplist
-    global resultslist
-    global allmemberslist
-    global overlord_members
-    global cwap_id
-    global admin_status
+    lists = loadlists()
+    members = lists["members"]
 
     scope = ['https://spreadsheets.google.com/feeds']
 
@@ -884,9 +863,11 @@ def autosheet(context):
     signup_cell_list = signup_ws.range('A1:A150')
 
     i = 0
-    for entry in signuplist:
-        signup_cell_list[i].value = entry[-1]
-        i += 1
+    for member in members:
+        if member["signed_up"]:
+            for signup_entry in member["signup_data"]:
+                signup_cell_list[i].value = signup_entry["CSV"]
+                i += 1
 
     while i < 150:
         signup_cell_list[i].value = ''
@@ -895,33 +876,16 @@ def autosheet(context):
     # Update in batch
     signup_ws.update_cells(signup_cell_list)
 
-    results_ws = sh.worksheet("results_csv")
-    results_cell_list = results_ws.range('A1:A150')
-
-    i = 0
-    for entry in resultslist:
-        results_cell_list[i].value = entry[-1]
-        i += 1
-
-    while i < 150:
-        results_cell_list[i].value = ''
-        i += 1
-
-    # Update in batch
-    results_ws.update_cells(results_cell_list)
-
     users_ws = sh.worksheet("member_list")
     members_cell_list = users_ws.range('A1:A150')
     admin_cell_list = users_ws.range('B1:B150')
 
     i = 0
     j = 0
-    for entry in allmemberslist:
-        members_cell_list[i].value = entry[0]
-        user_id = entry[1]
-        member_status = bot.get_chat_member(cwap_id, user_id).status
-        if member_status in admin_status:
-            admin_cell_list[j].value = entry[0]
+    for member in members:
+        members_cell_list[i].value = member["username"]
+        if member["is_admin"]:
+            admin_cell_list[j].value = member["username"]
             j += 1
         i += 1
 
@@ -1114,28 +1078,18 @@ def resetlists(update, context):
 
     lists = loadlists()
 
-    signups = lists["signups"]
-    results = lists["results"]
-    oldsignups = lists["oldsignups"]
+    members = lists["members"]
 
     time_stamp = str(int(time.time()))
+    shutil.copy('./data/members.txt', './data/members - ' + time_stamp + '.txt')
 
-    shutil.copy('oldsignups.txt', './Old Lists/oldsignups - ' + time_stamp + '.txt')
-    shutil.copy('results.txt', './Old Lists/results - ' + time_stamp + '.txt')
-    shutil.copy('signups.txt', './Old Lists/signups - ' + time_stamp + '.txt')
-    shutil.copy('{}videostarspickle.txt'.format(config["CWAP_LISTS"]), 'videostarspickle.txt')
+    for member in members:
+        user_id = member["user_id"]
+        member["signed_up"] = False
+        member["signup_data"] = []
+        members["boot_ids"].append(user_id)
 
-    oldsignups = signups
-    with open("oldsignups.txt", "wb") as file:
-        pickle.dump(oldsignuplist, file)
-
-    results = []
-    with open("results.txt", "wb") as file:
-        pickle.dump(resultslist, file)
-
-    signups = []
-    with open("signups.txt", "wb") as file:
-        pickle.dump(signuplist, file)
+    _dump(members)
 
     bot.send_message(chat_id=config["GROUPS"]["admin"], text="The signup list and results list have been reset.")
 
@@ -1187,7 +1141,6 @@ def kick(update, context):
 def superkick(update, context):
     """Superkick a member from all rooms by replying to one of their messages with the /superkick command."""
     bot = context.bot
-    chat_id = update.message.chat.id
     user_id = update.message.from_user.id
     boot_id = update.message.reply_to_message.from_user.id
     username = update.message.reply_to_message.from_user.name
@@ -1198,25 +1151,33 @@ def superkick(update, context):
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
 
-    bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id)
-    bot.kick_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id)
-    bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id)
+    in_crab_wap = _in_group(context, user_id, config["GROUPS"]["crab_wiv_a_plan"])
+    in_tutorial = _in_group(context, user_id, config["GROUPS"]["tutorial"])
+    in_video_stars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
 
-    bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id,
-                             can_send_messages=True,
-                             can_send_media_messages=True,
-                             can_add_web_page_previews=True,
-                             can_send_other_messages=True)
-    bot.restrict_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id,
-                             can_send_messages=True,
-                             can_send_media_messages=True,
-                             can_add_web_page_previews=True,
-                             can_send_other_messages=True)
-    bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id,
-                             can_send_messages=True,
-                             can_send_media_messages=True,
-                             can_add_web_page_previews=True,
-                             can_send_other_messages=True)
+    if in_crab_wap:
+        bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id)
+        bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id,
+                                 can_send_messages=True,
+                                 can_send_media_messages=True,
+                                 can_add_web_page_previews=True,
+                                 can_send_other_messages=True)
+
+    if in_tutorial:
+        bot.kick_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id)
+        bot.restrict_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id,
+                                 can_send_messages=True,
+                                 can_send_media_messages=True,
+                                 can_add_web_page_previews=True,
+                                 can_send_other_messages=True)
+
+    if in_video_stars:
+        bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id)
+        bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id,
+                                 can_send_messages=True,
+                                 can_send_media_messages=True,
+                                 can_add_web_page_previews=True,
+                                 can_send_other_messages=True)
 
     remove_member(boot_id)
 
@@ -1287,9 +1248,6 @@ def main():
     dp.add_handler(CommandHandler('opensignup', opensignup, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('checkboot', checkboot, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('setautoboot', setautoboot, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('closeresults', closeresults, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('openresults', openresults, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('qualified', qualified, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('checkfeedback', checkfeedback, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('sheet', sheet, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('plot', plot, (~Filters.update.edited_message)))
@@ -1308,7 +1266,6 @@ def main():
     dp.add_handler(CommandHandler('say', say, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
 
     # Repeating jobs
-    j.run_repeating(autojson, 300, first=30)
     j.run_repeating(autosheet, 60, first=30)
 
     # Start the Bot
