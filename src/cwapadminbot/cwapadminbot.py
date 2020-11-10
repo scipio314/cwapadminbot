@@ -9,13 +9,14 @@ from random import choice, randint
 import gspread
 import requests
 import yaml
-from cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user
 from oauth2client.service_account import ServiceAccountCredentials
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           ConversationHandler, Filters, MessageHandler,
                           Updater)
 from telegram.utils.helpers import escape_markdown
+
+from .utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -321,7 +322,6 @@ def waitlist(update, context):
 
 def closesignup(update, context):
     """Closes signup submissions with the command /closesignup."""
-    # TODO 01/26/2020 16:41: Must be revised to work with new signup system.
     bot = context.bot
     user_id = update.message.from_user.id
 
@@ -330,8 +330,6 @@ def closesignup(update, context):
         return
 
     dp.remove_handler(signup_handler)
-    dp.remove_handler(removesignup_handler)
-    dp.remove_handler(checksignup_handler)
 
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
                      text="Signups have been turned off.")
@@ -347,7 +345,6 @@ def closesignup(update, context):
 
 def opensignup(update, context):
     """Opens signup submissions with the command /opensignup."""
-    # TODO 01/26/2020 16:42: Revise to work with new signup system.
     bot = context.bot
     user_id = update.message.from_user.id
 
@@ -356,8 +353,6 @@ def opensignup(update, context):
         return
 
     dp.add_handler(signup_handler)
-    dp.add_handler(removesignup_handler)
-    dp.add_handler(checksignup_handler)
 
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
                      text="Signups have been opened.")
@@ -390,8 +385,9 @@ def signup(update, context):
     user_data = context.user_data
 
     authorized = lists["members"][user_id]["authorized"]
+    tutorial = _in_tutorial(context, user_id, config["GROUPS"]["tutorial"])
 
-    if not authorized:
+    if not authorized and not tutorial:
         return _unauthorized_message(bot, user_id, username)
 
     if user_id != chat_id:
@@ -644,27 +640,32 @@ def autoboot(context):
 
     for user_id in boot_ids:
         admin = members[user_id]["is_admin"]
-        if not admin:
-            try:
-                time.sleep(5)
-                bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
-                bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
-                bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id,
-                                         can_send_messages=True,
-                                         can_send_media_messages=True,
-                                         can_add_web_page_previews=True,
-                                         can_send_other_messages=True)
-                bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id,
-                                         can_send_messages=True,
-                                         can_send_media_messages=True,
-                                         can_add_web_page_previews=True,
-                                         can_send_other_messages=True)
-                bot.send_message(chat_id=user_id,
-                                 text="Hey, we removed you from the crab group because you didn't sign up in time.\n\n"
-                                      "Contact an admin to be put on our waitlist for next month.")
-                remove_member(user_id)
-            except:
-                continue
+
+        in_cwap = _in_group(context, user_id, config["GROUPS"]["crab_wiv_a_plan"])
+        in_videostars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
+
+        if in_cwap and not admin:
+            bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
+            bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id,
+                                     can_send_messages=True,
+                                     can_send_media_messages=True,
+                                     can_add_web_page_previews=True,
+                                     can_send_other_messages=True)
+
+        if in_videostars and not admin:
+            bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
+            bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id,
+                                     can_send_messages=True,
+                                     can_send_media_messages=True,
+                                     can_add_web_page_previews=True,
+                                     can_send_other_messages=True)
+
+        bot.send_message(chat_id=user_id,
+                         text="Hey, we removed you from the crab group because you didn't sign up in time.\n\n"
+                              "Contact an admin to be put on our waitlist for next month.")
+
+        remove_member(user_id)
+        time.sleep(2)
 
     i = 1
     the_message = "The following have been *AUTO KICKED* from Crab Wiv A Plan and Videostars.\n"
@@ -1044,10 +1045,6 @@ def performance(update, context):
     bot.delete_message(chat_id=chat_id,
                        message_id=update.message.message_id)
     return
-
-
-def signup(update, context):
-    bot = context.bot
 
 
 def signupstatus(update, context):

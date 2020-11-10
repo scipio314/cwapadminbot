@@ -2,6 +2,11 @@
 import pickle
 
 
+def _dump(members):
+    with open("members.txt", "wb") as file:
+        pickle.dump(members, file)
+
+
 def loadlists():
     """Function to load all data"""
     with open("signups.txt", "rb") as file:
@@ -41,52 +46,48 @@ def add_member(username, user_id):
     """Add a new CWAP member to data."""
     lists = loadlists()
 
-    all_ids = lists["members"]["all_ids"]
     members = lists["members"]
 
-    if user_id in all_ids:
+    if user_id in members["all_ids"]:
         return
 
-    lists["members"]["all_ids"].append(user_id)
-    lists["members"]["all_usernames"].append(username)
+    members["all_ids"].append(user_id)
+    members["all_usernames"].append(username)
+    members["boot_ids"].append(user_id)
 
     new_member = {
         user_id: {
             "user_id": user_id,
             "username": username,
             "authorized": True,
+            "is_admin": False,
+            "signed_up": False,
+            "signup_data": [],
         }
     }
 
     members.update(new_member)
 
-    with open("members.txt", "wb") as file:
-        pickle.dump(members, file)
-    return
+    _dump(members)
 
 
 def remove_member(user_id):
     """Remove a CWAP member from data."""
     lists = loadlists()
 
-    all_ids = lists["members"]["all_ids"]
-
-    if user_id not in all_ids:
-        return
-
     username = lists["members"][user_id]["username"]
 
     lists["members"]["all_ids"].remove(user_id)
     lists["members"]["all_usernames"].remove(username)
-    lists["members"]["boot_ids"].remove(user_id)
+
+    if user_id in lists["members"]["boot_ids"]:
+        lists["members"]["boot_ids"].remove(user_id)
 
     lists["members"].pop(user_id, None)
 
-    all_members = lists["members"]
+    members = lists["members"]
 
-    with open("members.txt", "wb") as file:
-        pickle.dump(all_members, file)
-    return
+    _dump(members)
 
 
 def signup_user(user_data):
@@ -95,19 +96,31 @@ def signup_user(user_data):
     lists = loadlists()
     members = lists["members"]
 
-    all_ids = members["all_ids"]
+    if user_id not in members["all_ids"]:
+        add_member(user_data['Username'], user_id)
+        lists = loadlists()
+        members = lists["members"]
 
-    if user_id not in all_ids:
-        return
-
-    lists["members"]["boot_ids"].remove(user_id)
+    members[user_id]["signed_up"] = True
+    members["boot_ids"].remove(user_id)
 
     csv = "{},{},{}".format(user_data['Username'], user_data['IGN'], user_data['VIDEOSTAR'])
 
-    members[user_id]["signed_up"] = True
     signup_data = {
         "IGN": user_data['IGN'],
         "VIDEOSTAR": user_data["VIDEOSTAR"],
         "CSV": csv
     }
     members[user_id]["signup_data"].append(signup_data)
+    _dump(members)
+
+
+def _in_group(context, user_id, group_id):
+    """Checks if member is in the tutorial room."""
+    bot = context.bot
+    try:
+        status = bot.get_chat_member(group_id, user_id).status
+    except:
+        return False
+    member_status = ['creator', 'administrator', 'member']
+    return status in member_status

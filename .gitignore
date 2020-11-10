@@ -50,6 +50,9 @@ src/cwapadminbot/cwapadminbot-old.py
 src/cwapadminbot/signup-old.py
 src/cwapadminbot/config.yaml
 src/cwapadminbot/signup.py
+test/
 
 # lists
 lists
+!/test/test-cwapadminbot.py
+src/cwapadminbot/data/
