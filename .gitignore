@@ -54,5 +54,4 @@ test/
 
 # lists
 lists
-!/test/test-cwapadminbot.py
 src/cwapadminbot/data/
