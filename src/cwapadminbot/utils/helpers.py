@@ -3,31 +3,31 @@ import pickle
 
 
 def _dump(members):
-    with open("members.txt", "wb") as file:
+    with open("../data/members.txt", "wb") as file:
         pickle.dump(members, file)
 
 
 def loadlists():
     """Function to load all data"""
-    with open("signups.txt", "rb") as file:
+    with open("../data/signups.txt", "rb") as file:
         signups = pickle.load(file)
 
-    with open("results.txt", "rb") as file:
+    with open("../data/results.txt", "rb") as file:
         results = pickle.load(file)
 
-    with open("members.txt", "rb") as file:
+    with open("../data/members.txt", "rb") as file:
         members = pickle.load(file)
 
-    with open("oldsignups.txt", "rb") as file:
+    with open("../data/oldsignups.txt", "rb") as file:
         oldsignups = pickle.load(file)
 
-    with open("joinrequests.txt", "rb") as file:
+    with open("../data/joinrequests.txt", "rb") as file:
         joinrequests = pickle.load(file)
 
-    with open("feedback.txt", "rb") as file:
+    with open("../data/feedback.txt", "rb") as file:
         feedback = pickle.load(file)
 
-    with open("videostarspickle.txt", "rb") as file:
+    with open("../data/videostarspickle.txt", "rb") as file:
         videostars = pickle.load(file)
 
     lists = {

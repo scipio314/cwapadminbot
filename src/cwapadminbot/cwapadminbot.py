@@ -16,7 +16,7 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           Updater)
 from telegram.utils.helpers import escape_markdown
 
-from .utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump
+from src.cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 

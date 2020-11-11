@@ -55,3 +55,7 @@ test/
 # lists
 lists
 src/cwapadminbot/data/
+!/src/cwapadminbot/utils/datamigration.py
+src/cwapadminbot/auth/
+src/cwapadminbot/utils/datamigration.py
+!/src/cwapadminbot/auth/cwapadminbot-8ae59015bca5.json
