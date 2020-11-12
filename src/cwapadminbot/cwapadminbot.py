@@ -127,8 +127,6 @@ def goodbye(update, context):
     user_id = update.message.left_chat_member[-1].id
     remove_member(user_id)
 
-    return
-
 
 def start(update, context):
     """Initialization with the bot using /start command."""
@@ -165,8 +163,6 @@ def start(update, context):
         add_member(username, user_id)
         return
 
-    return
-
 
 def ping(update, context):
     """Check the status of the bot using /ping command."""
@@ -186,8 +182,6 @@ def ping(update, context):
                          "EXECUTING OPERATION SKYNET"]
 
     bot.send_message(chat_id=update.message.chat_id, text=rand_ping_message[rand_num])
-
-    return
 
 
 def help(update, context):
@@ -233,7 +227,6 @@ def help(update, context):
 
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
-    return
 
 
 def joinrequest(update, context):
@@ -291,8 +284,6 @@ def joinrequest(update, context):
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
 
-    return
-
 
 def waitlist(update, context):
     """Sends the current waitlist for CWAP using the /waitlist command."""
@@ -317,8 +308,6 @@ def waitlist(update, context):
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
 
-    return
-
 
 def closesignup(update, context):
     """Closes signup submissions with the command /closesignup."""
@@ -340,8 +329,6 @@ def closesignup(update, context):
     bot.send_message(chat_id=user_id,
                      text="Signups have been turned off.")
 
-    return
-
 
 def opensignup(update, context):
     """Opens signup submissions with the command /opensignup."""
@@ -362,8 +349,6 @@ def opensignup(update, context):
 
     bot.send_message(chat_id=user_id,
                      text="Signups have been opened.")
-
-    return
 
 
 IGN, VIDEOSTAR, CONFIRMATION = range(3)
@@ -446,7 +431,6 @@ def _signup_confirmation(update, context):
                      .format(user_data['IGN'], user_data['VIDEOSTAR'], ),
                      parse_mode='HTML',
                      reply_markup=confirmation_markup)
-    return
 
 
 def _process_confirmation_button(update, context):
@@ -458,6 +442,8 @@ def _process_confirmation_button(update, context):
     user_data = context.user_data
 
     if the_choice == 'Confirm':
+        date_stamp = datetime.date.today().strftime("%B %d, %Y")
+        time_stamp = datetime.datetime.date().strftime("%H:%M:%S")
         signup_user(user_data)
 
         if context.user_data["VIDEOSTAR"] == "Yes":
@@ -465,8 +451,11 @@ def _process_confirmation_button(update, context):
             bot.send_message(chat_id=user_id,
                              text="In case you're not in the group already here is a link to join our recording "
                                   "volunteers group: {}".format(invite_link))
+
         bot.send_message(chat_id=user_id,
-                         text="Thanks your signup has been saved.")
+                         text="Thanks your signup has been saved.\n"
+                              "{} - {}".format(date_stamp, time_stamp))
+
     elif the_choice == 'Redo':
         bot.send_message(chat_id=user_id,
                          text="Click /signup to start over.")
@@ -511,8 +500,6 @@ def offline(update, context):
     bot.send_message(chat_id=config["GROUPS"]["tutorial"],
                      text="I am going offline for maintenance.")
 
-    return
-
 
 def online(update, context):
     """Notify all groups that bot is back online using /online command."""
@@ -536,8 +523,6 @@ def online(update, context):
     bot.send_message(chat_id=config["GROUPS"]["tutorial"],
                      text="I am back online and ready for action.")
 
-    return
-
 
 def checkboot(update, context):
     """Check the date and time non-signup members are booted using /checkboot command."""
@@ -552,8 +537,6 @@ def checkboot(update, context):
 
     bot.send_message(chat_id=user_id,
                      text="I have been programmed to boot members on {}".format(boot_date_fmt))
-
-    return
 
 
 def setautoboot(update, context):
@@ -591,8 +574,6 @@ def setautoboot(update, context):
     j.run_once(bootreminder, reminder_date)
     j.run_once(autoboot, boot_date)
 
-    return
-
 
 def bootreminder(context):
     """Sends a direct message to members not signed up (excluding admin). Runs 24 hours prior to boot deadline."""
@@ -626,8 +607,6 @@ def bootreminder(context):
 
     bot.send_message(chat_id=config["GROUPS"]["admin"],
                      text="The delinquents have been warned that they will get booted in 24 hours if not signed up.")
-
-    return
 
 
 def autoboot(context):
@@ -678,8 +657,6 @@ def autoboot(context):
 
     bot.send_message(chat_id=config["GROUPS"]["admin"], text="I have booted the members.")
 
-    return
-
 
 def action(update, context):
     """A fun command to send bot actions (typing, record audio, upload photo, etc). Action appears at top of main chat.
@@ -698,8 +675,6 @@ def action(update, context):
                          'UPLOAD_DOCUMENT', 'UPLOAD_PHOTO', 'UPLOAD_VIDEO', 'UPLOAD_VIDEO_NOTE']
     send_action = choice(available_actions)
     bot.send_chat_action(chat_id=config["GROUPS"]["crab_wiv_a_plan"], action=send_action)
-
-    return
 
 
 def feedback(update, context):
@@ -723,7 +698,7 @@ def feedback(update, context):
     user_feedback = " ".join(args[0:])
     feedbacklist.append([username, user_feedback])
 
-    with open("feedbacklist.txt", "wb") as file:
+    with open("feedback.txt", "wb") as file:
         pickle.dump(feedbacklist, file)
 
     bot.send_message(chat_id=user_id,
@@ -734,8 +709,6 @@ def feedback(update, context):
 
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
-
-    return
 
 
 def checkfeedback(update, context):
@@ -765,7 +738,6 @@ def checkfeedback(update, context):
 
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
-    return
 
 
 def replay(update, context):
@@ -777,8 +749,6 @@ def replay(update, context):
     if chat_id == user_id:
         bot.send_message(chat_id=user_id, text="Yo, that command is meant for my friend @cwapbot. "
                                                "Use that command with that bot and let me go back to sleep.")
-
-    return
 
 
 def sheet(update, context):
@@ -843,8 +813,6 @@ def sheet(update, context):
 
     bot.send_message(chat_id=update.message.chat_id, text="Done, sir.")
 
-    return
-
 
 def autosheet(context):
     """Automatically update the signup and results sheet. Currently on a 60s timer."""
@@ -899,8 +867,6 @@ def autosheet(context):
     users_ws.update_cells(members_cell_list)
     users_ws.update_cells(admin_cell_list)
 
-    return
-
 
 def plot(update, context):
     """A command to send a plot of user requests of the @cwapbot /replay command. Currently not functional."""
@@ -952,7 +918,6 @@ def plot(update, context):
 
     caption = "scatter plot of all replay requests for {}".format(user)
     bot.send_photo(chat_id=user_id, photo=open('./Img/Users/' + user + '_scatt.png', 'rb'), caption=caption)
-    return
 
 
 def roster(update, context):
@@ -977,7 +942,6 @@ def roster(update, context):
 
     bot.delete_message(chat_id=chat_id,
                        message_id=update.message.message_id)
-    return
 
 
 def performance(update, context):
@@ -1008,7 +972,6 @@ def performance(update, context):
 
     bot.delete_message(chat_id=chat_id,
                        message_id=update.message.message_id)
-    return
 
 
 def signupstatus(update, context):
@@ -1063,7 +1026,6 @@ def signupstatus(update, context):
 
     bot.delete_message(chat_id=chat_id,
                        message_id=update.message.message_id)
-    return
 
 
 def resetlists(update, context):
@@ -1092,8 +1054,6 @@ def resetlists(update, context):
     _dump(members)
 
     bot.send_message(chat_id=config["GROUPS"]["admin"], text="The signup list and results list have been reset.")
-
-    return
 
 
 def kick(update, context):
@@ -1134,8 +1094,6 @@ def kick(update, context):
 
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
-
-    return
 
 
 def superkick(update, context):
@@ -1191,8 +1149,6 @@ def superkick(update, context):
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
 
-    return
-
 
 def quote(update, context):
     """Sends a random quote from Game of Thrones when using /quote command."""
@@ -1211,8 +1167,6 @@ def quote(update, context):
     bot.delete_message(chat_id=update.message.chat_id,
                        message_id=update.message.message_id)
 
-    return
-
 
 def say(update, context):
     """A command to help calling some methods from the API directly by Telegram."""
@@ -1225,7 +1179,6 @@ def say(update, context):
     command = ' '.join(args)
     eval(command)
     bot.send_message(chat_id=user_id, text="Done.")
-    return
 
 
 def main():
