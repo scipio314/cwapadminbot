@@ -54,6 +54,7 @@ test/
 
 # data
 src/cwapadminbot/data/*.txt
+!src/cwapadminbot/data
 
 # auth
 src/cwapadminbot/auth/*.json
