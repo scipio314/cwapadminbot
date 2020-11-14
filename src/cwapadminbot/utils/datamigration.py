@@ -9,28 +9,38 @@ with open('../config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 
-def loadlists():
-    """Function to load all data"""
-    with open("../data/signups.txt", "rb") as file:
+def load_list(list):
+    """Function to load specific list"""
+    with open("../data/{}.txt".format(list), "rb") as file:
+        the_list = pickle.load(file)
+    return the_list
+
+
+def load_all_old_lists():
+    """Function to load all old data"""
+    with open("../data/signuplist.txt", "rb") as file:
         signups = pickle.load(file)
 
-    with open("../data/results.txt", "rb") as file:
+    with open("../data/resultslist.txt", "rb") as file:
         results = pickle.load(file)
 
-    with open("../data/allmembers.txt", "rb") as file:
+    with open("../data/allmemberslist.txt", "rb") as file:
         members = pickle.load(file)
 
-    with open("../data/oldsignups.txt", "rb") as file:
+    with open("../data/oldsignupslist.txt", "rb") as file:
         oldsignups = pickle.load(file)
 
-    with open("../data/joinrequests.txt", "rb") as file:
+    with open("../data/joinrequestlist.txt", "rb") as file:
         joinrequests = pickle.load(file)
 
-    with open("../data/feedback.txt", "rb") as file:
+    with open("../data/feedbacklist.txt", "rb") as file:
         feedback = pickle.load(file)
 
-    with open("../data/videostars.txt", "rb") as file:
+    with open("../data/videostarspickle.txt", "rb") as file:
         videostars = pickle.load(file)
+
+    with open("../data/requestspickle.txt", "rb") as file:
+        requests = pickle.load(file)
 
     lists = {
         "signups": signups,
@@ -40,14 +50,13 @@ def loadlists():
         "joinrequests": joinrequests,
         "feedback": feedback,
         "videostars": videostars,
+        "requests": requests,
     }
     return lists
 
 
 def migrate_members():
-    old_lists = loadlists()
-
-    old_members = old_lists["members"]
+    old_members = load_list(list="allmemberslist")
     new_members = {}
     new_members["all_ids"] = []
     new_members["all_usernames"] = []
@@ -93,9 +102,8 @@ def migrate_members():
 
 
 def migrate_signups():
-    old_lists = loadlists()
-    old_signups = old_lists["signups"]
-
+    """Migrate old signup format to the new one."""
+    old_signups = load_list(list="signuplist")
     new_members = migrate_members()
 
     # [username, user_id, IGN, Country, Stage, Volunteer, CSV]
