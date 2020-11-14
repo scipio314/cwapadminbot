@@ -52,10 +52,10 @@ src/cwapadminbot/config.yaml
 src/cwapadminbot/signup.py
 test/
 
-# lists
-lists
+# data
 src/cwapadminbot/data/
-!/src/cwapadminbot/utils/datamigration.py
+src/cwapadminbot/data/*.txt
+
+# auth
 src/cwapadminbot/auth/
-src/cwapadminbot/utils/datamigration.py
-!/src/cwapadminbot/auth/cwapadminbot-8ae59015bca5.json
+src/cwapadminbot/auth/*.json
