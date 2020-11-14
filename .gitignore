@@ -53,10 +53,7 @@ src/cwapadminbot/signup.py
 test/
 
 # data
-!/src/cwapadminbot/data/
 src/cwapadminbot/data/*.txt
-lists/
 
 # auth
-!/src/cwapadminbot/auth/
 src/cwapadminbot/auth/*.json
