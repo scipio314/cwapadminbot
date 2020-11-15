@@ -9,16 +9,16 @@ def _dump(members):
 
 def loadlists():
     """Function to load all data"""
-    with open("../data/members.txt", "rb") as file:
+    with open("./data/members.txt", "rb") as file:
         members = pickle.load(file)
 
-    with open("../data/joinrequests.txt", "rb") as file:
+    with open("./data/joinrequests.txt", "rb") as file:
         joinrequests = pickle.load(file)
 
-    with open("../data/feedback.txt", "rb") as file:
+    with open("./data/feedback.txt", "rb") as file:
         feedback = pickle.load(file)
 
-    with open("../data/videostarspickle.txt", "rb") as file:
+    with open("./data/videostarspickle.txt", "rb") as file:
         videostars = pickle.load(file)
 
     lists = {
