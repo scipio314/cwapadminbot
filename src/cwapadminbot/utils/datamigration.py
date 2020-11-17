@@ -61,6 +61,7 @@ def migrate_members():
     new_members["all_ids"] = []
     new_members["all_usernames"] = []
     new_members["boot_ids"] = []
+    new_members["users"] = {}
     bot = tgbot(token=config["TOKEN"])
 
     for member in old_members:
@@ -90,7 +91,7 @@ def migrate_members():
             }
         }
 
-        new_members.update(new_member)
+        new_members["users"].update(new_member)
         new_members["all_ids"].append(user_id)
         new_members["all_usernames"].append(username)
         new_members["boot_ids"].append(user_id)

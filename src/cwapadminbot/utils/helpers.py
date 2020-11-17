@@ -54,7 +54,7 @@ def add_member(username, user_id):
         }
     }
 
-    members.update(new_member)
+    members["users"].update(new_member)
 
     _dump(members)
 
@@ -63,7 +63,7 @@ def remove_member(user_id):
     """Remove a CWAP member from data."""
     lists = loadlists()
 
-    username = lists["members"][user_id]["username"]
+    username = lists["members"]["users"][user_id]["username"]
 
     lists["members"]["all_ids"].remove(user_id)
     lists["members"]["all_usernames"].remove(username)
@@ -71,7 +71,7 @@ def remove_member(user_id):
     if user_id in lists["members"]["boot_ids"]:
         lists["members"]["boot_ids"].remove(user_id)
 
-    lists["members"].pop(user_id, None)
+    lists["members"]["users"].pop(user_id, None)
 
     members = lists["members"]
 
@@ -89,7 +89,7 @@ def signup_user(user_data):
         lists = loadlists()
         members = lists["members"]
 
-    members[user_id]["signed_up"] = True
+    members["users"][user_id]["signed_up"] = True
     members["boot_ids"].remove(user_id)
 
     csv = "{},{},{}".format(user_data['Username'], user_data['IGN'], user_data['VIDEOSTAR'])
@@ -99,7 +99,7 @@ def signup_user(user_data):
         "VIDEOSTAR": user_data["VIDEOSTAR"],
         "CSV": csv
     }
-    members[user_id]["signup_data"].append(signup_data)
+    members["users"][user_id]["signup_data"].append(signup_data)
     _dump(members)
 
 
