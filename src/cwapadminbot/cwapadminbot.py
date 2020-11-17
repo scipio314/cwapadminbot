@@ -137,7 +137,7 @@ def start(update, context):
 
     tutorial_id = config["GROUPS"]["tutorial"]
     lists = loadlists()
-    authorized = lists["members"][user_id]["authorized"]
+    authorized = lists["members"]["users"][user_id]["authorized"]
     tutorial_status = bot.get_chat_member(tutorial_id, user_id).status
     authorized_status = config["STATUS"]["authorized"]
 
@@ -171,7 +171,7 @@ def ping(update, context):
     user_id = update.message.from_user.id
 
     lists = loadlists()
-    authorized = lists["members"][user_id]["authorized"]
+    authorized = lists["members"]["users"][user_id]["authorized"]
 
     if not authorized:
         return _unauthorized_message(bot, user_id, username)
@@ -191,8 +191,8 @@ def help(update, context):
     user_id = update.message.from_user.id
 
     lists = loadlists()
-    authorized = lists["members"][user_id]["authorized"]
-    admin = lists["members"][user_id]["is_admin"]
+    authorized = lists["members"]["users"][user_id]["authorized"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
 
     if not authorized:
         _unauthorized_message(bot, user_id, username)
@@ -238,7 +238,7 @@ def joinrequest(update, context):
     user_id = update.message.from_user.id
 
     lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
     joinrequests = lists["joinrequests"]
 
     if not admin:
@@ -292,7 +292,7 @@ def waitlist(update, context):
     username = update.message.from_user.name
 
     lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
     joinrequests = lists["joinrequests"]
 
     if not admin:
@@ -369,8 +369,8 @@ def signup(update, context):
     chat_id = update.message.chat_id
     user_data = context.user_data
 
-    authorized = lists["members"][user_id]["authorized"]
-    tutorial = _in_tutorial(context, user_id, config["GROUPS"]["tutorial"])
+    authorized = lists["members"]["users"][user_id]["authorized"]
+    tutorial = _in_group(context, user_id, config["GROUPS"]["tutorial"])
 
     if not authorized and not tutorial:
         return _unauthorized_message(bot, user_id, username)
@@ -584,7 +584,7 @@ def bootreminder(context):
     boot_ids = lists["members"]["boot_ids"]
 
     for user_id in boot_ids:
-        admin = lists["members"][user_id]["is_admin"]
+        admin = lists["members"]["users"][user_id]["is_admin"]
         if not admin:
             time.sleep(1)
             try:
@@ -599,7 +599,7 @@ def bootreminder(context):
     i = 1
     the_message = 'The following have been warned to signup in the next 24 hours or get booted:\n'
     for user_id in boot_ids:
-        the_message += '\n{}) {}'.format(i, escape_markdown(members[user_id]["username"]))
+        the_message += '\n{}) {}'.format(i, escape_markdown(members["users"][user_id]["username"]))
         i += 1
 
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
@@ -618,7 +618,7 @@ def autoboot(context):
     boot_ids = lists["members"]["boot_ids"]
 
     for user_id in boot_ids:
-        admin = members[user_id]["is_admin"]
+        admin = members["users"][user_id]["is_admin"]
 
         in_cwap = _in_group(context, user_id, config["GROUPS"]["crab_wiv_a_plan"])
         in_videostars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
@@ -649,7 +649,7 @@ def autoboot(context):
     i = 1
     the_message = "The following have been *AUTO KICKED* from Crab Wiv A Plan and Videostars.\n"
     for user_id in boot_ids:
-        the_message += "\n{}) {}".format(i, escape_markdown(members[user_id]["username"]))
+        the_message += "\n{}) {}".format(i, escape_markdown(members["users"][user_id]["username"]))
         i += 1
 
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
@@ -666,7 +666,7 @@ def action(update, context):
     username = update.message.from_user.name
 
     lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -686,7 +686,7 @@ def feedback(update, context):
     username = update.message.from_user.name
 
     lists = loadlists()
-    authorized = lists["members"][user_id]["authorized"]
+    authorized = lists["members"]["users"][user_id]["authorized"]
     feedbacklist = lists["feedback"]
 
     if not authorized:
@@ -719,7 +719,7 @@ def checkfeedback(update, context):
 
     lists = loadlists()
     all_feedback = lists["feedback"]
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -775,9 +775,9 @@ def sheet(update, context):
     signup_cell_list = signup_ws.range('A1:A150')
 
     i = 0
-    for member in members:
-        if member["signed_up"]:
-            for signup_entry in member["signup_data"]:
+    for user_id in members["users"]:
+        if members["users"][user_id]["signed_up"]:
+            for signup_entry in members["users"][user_id]["signup_data"]:
                 signup_cell_list[i].value = signup_entry["CSV"]
                 i += 1
 
@@ -794,10 +794,10 @@ def sheet(update, context):
 
     i = 0
     j = 0
-    for member in members:
-        members_cell_list[i].value = member["username"]
-        if member["is_admin"]:
-            admin_cell_list[j].value = member["username"]
+    for user_id in members["users"]:
+        members_cell_list[i].value = members["users"][user_id]["username"]
+        if members["users"][user_id]["is_admin"]:
+            admin_cell_list[j].value = members["users"][user_id]["username"]
             j += 1
         i += 1
 
@@ -831,9 +831,9 @@ def autosheet(context):
     signup_cell_list = signup_ws.range('A1:A150')
 
     i = 0
-    for member in members:
-        if member["signed_up"]:
-            for signup_entry in member["signup_data"]:
+    for user_id in members["users"]:
+        if members["users"][user_id]["signed_up"]:
+            for signup_entry in members["users"][user_id]["signup_data"]:
                 signup_cell_list[i].value = signup_entry["CSV"]
                 i += 1
 
@@ -850,10 +850,10 @@ def autosheet(context):
 
     i = 0
     j = 0
-    for member in members:
-        members_cell_list[i].value = member["username"]
-        if member["is_admin"]:
-            admin_cell_list[j].value = member["username"]
+    for user_id in members["users"]:
+        members_cell_list[i].value = members["users"][user_id]["username"]
+        if members["users"][user_id]["is_admin"]:
+            admin_cell_list[j].value = members["users"][user_id]["username"]
             j += 1
         i += 1
 
@@ -878,7 +878,7 @@ def plot(update, context):
     text = update.message.text
 
     lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -928,7 +928,7 @@ def roster(update, context):
     chat_id = update.message.chat_id
 
     lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -952,7 +952,7 @@ def performance(update, context):
     chat_id = update.message.chat_id
 
     lists = loadlists()
-    authorized = lists["members"][user_id]["authorized"]
+    authorized = lists["members"]["users"][user_id]["authorized"]
 
     if not authorized:
         return _unauthorized_message(bot, user_id, username)
@@ -983,7 +983,7 @@ def signupstatus(update, context):
     chat_id = update.message.chat_id
 
     lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -996,8 +996,8 @@ def signupstatus(update, context):
     i = 1
     j = 1
     for user in boot_ids:
-        username = lists["members"][user]["username"]
-        admin = lists["members"][user]["is_admin"]
+        username = lists["members"]["users"][user]["username"]
+        admin = lists["members"]["users"][user]["is_admin"]
         if not admin:
             boot_users += "\n{}) {}".format(i, escape_markdown(username))
             i += 1
@@ -1045,11 +1045,11 @@ def resetlists(update, context):
     time_stamp = str(int(time.time()))
     shutil.copy('./data/members.txt', './data/members - ' + time_stamp + '.txt')
 
-    for member in members:
-        user_id = member["user_id"]
-        member["signed_up"] = False
-        member["signup_data"] = []
-        members["boot_ids"].append(user_id)
+    for member in members["users"]:
+        user_id = members["users"][user_id]["user_id"]
+        members["users"][user_id]["signed_up"] = False
+        members["users"][user_id]["signup_data"] = []
+        members["users"][user_id]["boot_ids"].append(user_id)
 
     _dump(members)
 
@@ -1066,7 +1066,7 @@ def kick(update, context):
     username = update.message.reply_to_message.from_user.name
 
     lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -1104,7 +1104,7 @@ def superkick(update, context):
     username = update.message.reply_to_message.from_user.name
 
     lists = loadlists()
-    admin = lists["members"][user_id]["is_admin"]
+    admin = lists["members"]["users"][user_id]["is_admin"]
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
