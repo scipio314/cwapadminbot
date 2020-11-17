@@ -124,8 +124,8 @@ def migrate_signups():
         if user_id not in new_members["all_ids"]:
             print(f"{username}")
             continue
-        new_members[user_id]["signup_data"].append(signup_data)
-        new_members[user_id]["signed_up"] = True
+        new_members["users"][user_id]["signup_data"].append(signup_data)
+        new_members["users"][user_id]["signed_up"] = True
 
         try:
             new_members["boot_ids"].remove(user_id)
