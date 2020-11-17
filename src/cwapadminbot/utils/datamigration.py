@@ -30,10 +30,10 @@ def load_all_old_lists():
     with open("../data/oldsignupslist.txt", "rb") as file:
         oldsignups = pickle.load(file)
 
-    with open("../data/joinrequestlist.txt", "rb") as file:
+    with open("../data/joinrequests.txt", "rb") as file:
         joinrequests = pickle.load(file)
 
-    with open("../data/feedbacklist.txt", "rb") as file:
+    with open("../data/feedback.txt", "rb") as file:
         feedback = pickle.load(file)
 
     with open("../data/videostarspickle.txt", "rb") as file:
