@@ -351,7 +351,7 @@ def opensignup(update, context):
                      text="Signups have been opened.")
 
 
-IGN, VIDEOSTAR, CONFIRMATION = range(3)
+IGN, VIDEOSTAR, CONFIRMATION, PROCESS_CONFIRMATION = range(4)
 
 
 def signup(update, context):
@@ -418,19 +418,23 @@ def _signup_confirmation(update, context):
     bot = context.bot
     user_data = context.user_data
     user_id = context.user_data['User_ID']
+    message_id = update.callback_query.message.message_id
 
     confirmation_keyboard = [[InlineKeyboardButton('Confirm', callback_data='Confirm')],
                              [InlineKeyboardButton('Redo', callback_data='Redo')]]
 
     confirmation_markup = InlineKeyboardMarkup(confirmation_keyboard)
 
-    bot.send_message(chat_id=user_id,
-                     text="Please Confirm the following submission:\n\n"
+    bot.edit_message_text(chat_id=user_id,
+                          message_id=message_id,
+                          text="Please Confirm the following submission:\n\n"
                           "<code>IGN:</code> <b>{}</b> \n"
                           "<code>Volunteer to Record:</code> <b>{}</b> \n\n"
-                     .format(user_data['IGN'], user_data['VIDEOSTAR'], ),
-                     parse_mode='HTML',
-                     reply_markup=confirmation_markup)
+                          .format(user_data['IGN'], user_data['VIDEOSTAR'], ),
+                          parse_mode='HTML',
+                          reply_markup=confirmation_markup)
+
+    return
 
 
 def _process_confirmation_button(update, context):
@@ -440,25 +444,29 @@ def _process_confirmation_button(update, context):
     user_id = query.from_user.id
     the_choice = query.data
     user_data = context.user_data
+    message_id = update.callback_query.message.message_id
 
     if the_choice == 'Confirm':
-        date_stamp = datetime.date.today().strftime("%B %d, %Y")
-        time_stamp = datetime.datetime.date().strftime("%H:%M:%S")
+        date_stamp = datetime.datetime.today().strftime("%B %d, %Y")
+        time_stamp = datetime.datetime.now().strftime("%H:%M:%S")
         signup_user(user_data)
 
         if context.user_data["VIDEOSTAR"] == "Yes":
-            invite_link = bot.get_chat(chat_id=config["GROUPS"]["video_stars"]).invite_link
+            invite_link = bot.export_chat_invite_link(chat_id=config["GROUPS"]["video_stars"])
             bot.send_message(chat_id=user_id,
-                             text="In case you're not in the group already here is a link to join our recording "
-                                  "volunteers group: {}".format(invite_link))
+                             text="In case you're not in the volunteer recording group already, here is a link to join:"
+                                  " {}".format(invite_link))
 
-        bot.send_message(chat_id=user_id,
-                         text="Thanks your signup has been saved.\n"
-                              "{} - {}".format(date_stamp, time_stamp))
+        bot.edit_message_text(chat_id=user_id,
+                              message_id=message_id,
+                              text="Thanks your signup has been saved.\n"
+                              "{} - {} CET".format(date_stamp, time_stamp))
 
     elif the_choice == 'Redo':
-        bot.send_message(chat_id=user_id,
-                         text="Click /signup to start over.")
+        bot.edit_message_text(chat_id=user_id,
+                              message_id=message_id,
+                              text="Click /signup to start over.")
+
     return ConversationHandler.END
 
 
@@ -472,7 +480,8 @@ signup_handler = ConversationHandler(
     states={
         IGN: [MessageHandler(Filters.text, _signup_ign, pass_user_data=True)],
         VIDEOSTAR: [CallbackQueryHandler(_videostar, pass_user_data=True)],
-        CONFIRMATION: [CallbackQueryHandler(_signup_confirmation, pass_user_data=True)],
+        # CONFIRMATION: [CallbackQueryHandler(_signup_confirmation, pass_user_data=True)],
+        CONFIRMATION: [CallbackQueryHandler(_process_confirmation_button, pass_user_data=True)],
     },
     fallbacks=[CommandHandler('cancel', cancel)]
 )
@@ -774,11 +783,15 @@ def sheet(update, context):
     signup_ws = sh.worksheet("signup_csv")
     signup_cell_list = signup_ws.range('A1:A150')
 
+    posted_ids = []
+
     i = 0
-    for user_id in members["users"]:
-        if members["users"][user_id]["signed_up"]:
-            for signup_entry in members["users"][user_id]["signup_data"]:
+    for user_id in members["signup_ids"]:
+        for signup_entry in members["users"][user_id]["signup_data"]:
+            signup_uuid = signup_entry["UUID"]
+            if signup_uuid not in posted_ids:
                 signup_cell_list[i].value = signup_entry["CSV"]
+                posted_ids.append(signup_uuid)
                 i += 1
 
     while i < 150:
@@ -830,11 +843,15 @@ def autosheet(context):
     signup_ws = sh.worksheet("signup_csv")
     signup_cell_list = signup_ws.range('A1:A150')
 
+    posted_ids = []
+
     i = 0
-    for user_id in members["users"]:
-        if members["users"][user_id]["signed_up"]:
-            for signup_entry in members["users"][user_id]["signup_data"]:
+    for user_id in members["signup_ids"]:
+        for signup_entry in members["users"][user_id]["signup_data"]:
+            signup_uuid = signup_entry["UUID"]
+            if signup_uuid not in posted_ids:
                 signup_cell_list[i].value = signup_entry["CSV"]
+                posted_ids.append(signup_uuid)
                 i += 1
 
     while i < 150:

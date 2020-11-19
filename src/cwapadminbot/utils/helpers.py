@@ -1,9 +1,10 @@
 """This module contains helper functions."""
 import pickle
+import uuid
 
 
 def _dump(members):
-    with open("../data/members.txt", "wb") as file:
+    with open("./data/members.txt", "wb") as file:
         pickle.dump(members, file)
 
 
@@ -71,6 +72,9 @@ def remove_member(user_id):
     if user_id in lists["members"]["boot_ids"]:
         lists["members"]["boot_ids"].remove(user_id)
 
+    if user_id in lists["members"]["signup_ids"]:
+        lists["members"]["signup_ids"].remove(user_id)
+
     lists["members"]["users"].pop(user_id, None)
 
     members = lists["members"]
@@ -90,14 +94,19 @@ def signup_user(user_data):
         members = lists["members"]
 
     members["users"][user_id]["signed_up"] = True
-    members["boot_ids"].remove(user_id)
+    if user_id in members["boot_ids"]:
+        members["boot_ids"].remove(user_id)
+
+    if user_id not in members["signup_ids"]:
+        members["signup_ids"].append(user_id)
 
     csv = "{},{},{}".format(user_data['Username'], user_data['IGN'], user_data['VIDEOSTAR'])
 
     signup_data = {
         "IGN": user_data['IGN'],
         "VIDEOSTAR": user_data["VIDEOSTAR"],
-        "CSV": csv
+        "CSV": csv,
+        "UUID": uuid.uuid4(),
     }
     members["users"][user_id]["signup_data"].append(signup_data)
     _dump(members)

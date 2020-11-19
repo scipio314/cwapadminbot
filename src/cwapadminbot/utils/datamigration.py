@@ -1,6 +1,7 @@
 """A module to convert old data format to the new data format."""
 import pickle
 import time
+import uuid
 
 import yaml
 from telegram import Bot as tgbot
@@ -61,6 +62,7 @@ def migrate_members():
     new_members["all_ids"] = []
     new_members["all_usernames"] = []
     new_members["boot_ids"] = []
+    new_members["signup_ids"] = []
     new_members["users"] = {}
     bot = tgbot(token=config["TOKEN"])
 
@@ -119,18 +121,19 @@ def migrate_signups():
         signup_data = {
             "IGN": ign,
             "VIDEOSTAR": videostar,
-            "CSV": csv
+            "CSV": csv,
+            "UUID": uuid.uuid4()
         }
         if user_id not in new_members["all_ids"]:
             print(f"{username}")
             continue
+
         new_members["users"][user_id]["signup_data"].append(signup_data)
         new_members["users"][user_id]["signed_up"] = True
+        new_members["signup_ids"].append(user_id)
 
-        try:
+        if user_id in new_members["boot_ids"]:
             new_members["boot_ids"].remove(user_id)
-        except ValueError:
-            continue
 
     return new_members
 
