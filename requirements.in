@@ -3,3 +3,4 @@ gspread
 requests
 pyaml
 oauth2client
+repackage
