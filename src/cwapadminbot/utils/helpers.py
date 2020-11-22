@@ -3,15 +3,18 @@ import pickle
 import uuid
 
 
-def _dump(members):
-    with open("./data/members.txt", "wb") as file:
-        pickle.dump(members, file)
+def _dump(name, data):
+    with open("./data/{}.txt".format(name), "wb") as file:
+        pickle.dump(data, file)
 
 
 def loadlists():
     """Function to load all data"""
     with open("./data/members.txt", "rb") as file:
         members = pickle.load(file)
+
+    with open("./data/signups.txt", "rb") as file:
+        signups = pickle.load(file)
 
     with open("./data/joinrequests.txt", "rb") as file:
         joinrequests = pickle.load(file)
@@ -27,6 +30,7 @@ def loadlists():
         "joinrequests": joinrequests,
         "feedback": feedback,
         "videostars": videostars,
+        "signups": signups,
     }
     return lists
 
@@ -57,12 +61,14 @@ def add_member(username, user_id):
 
     members["users"].update(new_member)
 
-    _dump(members)
+    _dump(name="members", data=members)
 
 
 def remove_member(user_id):
     """Remove a CWAP member from data."""
     lists = loadlists()
+    signups = lists["signups"]
+    all_signup_ids = lists["signups"].keys()
 
     username = lists["members"]["users"][user_id]["username"]
 
@@ -73,13 +79,17 @@ def remove_member(user_id):
         lists["members"]["boot_ids"].remove(user_id)
 
     if user_id in lists["members"]["signup_ids"]:
+        user_signup_ids = []
+        for signup in lists["members"][user_id]["signup_data"]:
+            user_signup_ids.append(signup["UUID"])
+
+        signups = [signups.pop(signup_id, None) for signup_id in all_signup_ids if signup_id in user_signup_ids]
         lists["members"]["signup_ids"].remove(user_id)
 
-    lists["members"]["users"].pop(user_id, None)
+    members = lists["members"]["users"].pop(user_id, None)
 
-    members = lists["members"]
-
-    _dump(members)
+    _dump(name="members", data=members)
+    _dump(name="signups", data=signups)
 
 
 def signup_user(user_data):
@@ -87,6 +97,7 @@ def signup_user(user_data):
     user_id = user_data['User_ID']
     lists = loadlists()
     members = lists["members"]
+    signups = lists["signups"]
 
     if user_id not in members["all_ids"]:
         add_member(user_data['Username'], user_id)
@@ -101,15 +112,18 @@ def signup_user(user_data):
         members["signup_ids"].append(user_id)
 
     csv = "{},{},{}".format(user_data['Username'], user_data['IGN'], user_data['VIDEOSTAR'])
+    signup_id = uuid.uuid4()
 
     signup_data = {
         "IGN": user_data['IGN'],
         "VIDEOSTAR": user_data["VIDEOSTAR"],
         "CSV": csv,
-        "UUID": uuid.uuid4(),
+        "UUID": signup_id,
     }
     members["users"][user_id]["signup_data"].append(signup_data)
-    _dump(members)
+    signups[signup_id] = signup_data
+    _dump(name="members", data=members)
+    _dump(name="signups", data=signups)
 
 
 def _in_group(context, user_id, group_id):

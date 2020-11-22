@@ -767,6 +767,7 @@ def sheet(update, context):
 
     lists = loadlists()
     members = lists["members"]
+    signups = lists["signups"]
     overlords = config["OVERLORDS"]
 
     if user_id not in overlords:
@@ -783,16 +784,10 @@ def sheet(update, context):
     signup_ws = sh.worksheet("signup_csv")
     signup_cell_list = signup_ws.range('A1:A150')
 
-    posted_ids = []
-
     i = 0
-    for user_id in members["signup_ids"]:
-        for signup_entry in members["users"][user_id]["signup_data"]:
-            signup_uuid = signup_entry["UUID"]
-            if signup_uuid not in posted_ids:
-                signup_cell_list[i].value = signup_entry["CSV"]
-                posted_ids.append(signup_uuid)
-                i += 1
+    for signup_entry in signups:
+        signup_cell_list[i].value = signup_entry["CSV"]
+        i += 1
 
     while i < 150:
         signup_cell_list[i].value = ''
@@ -831,7 +826,7 @@ def autosheet(context):
     """Automatically update the signup and results sheet. Currently on a 60s timer."""
     lists = loadlists()
     members = lists["members"]
-
+    signups = lists["signups"]
     scope = ['https://spreadsheets.google.com/feeds']
 
     credentials = ServiceAccountCredentials.from_json_keyfile_name(config["GOOGLE"]["credentials"], scope)
@@ -843,16 +838,10 @@ def autosheet(context):
     signup_ws = sh.worksheet("signup_csv")
     signup_cell_list = signup_ws.range('A1:A150')
 
-    posted_ids = []
-
     i = 0
-    for user_id in members["signup_ids"]:
-        for signup_entry in members["users"][user_id]["signup_data"]:
-            signup_uuid = signup_entry["UUID"]
-            if signup_uuid not in posted_ids:
-                signup_cell_list[i].value = signup_entry["CSV"]
-                posted_ids.append(signup_uuid)
-                i += 1
+    for signup_entry in signups:
+        signup_cell_list[i].value = signup_entry["CSV"]
+        i += 1
 
     while i < 150:
         signup_cell_list[i].value = ''
