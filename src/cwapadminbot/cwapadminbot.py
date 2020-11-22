@@ -1053,16 +1053,19 @@ def resetlists(update, context):
 
     time_stamp = str(int(time.time()))
     shutil.copy('./data/members.txt', './data/members - ' + time_stamp + '.txt')
+    shutil.copy('./data/signups.txt', './data/signups - ' + time_stamp + '.txt')
 
-    for member in members["users"]:
-        user_id = members["users"][user_id]["user_id"]
+    for user_id in members["users"]:
         members["users"][user_id]["signed_up"] = False
         members["users"][user_id]["signup_data"] = []
         members["users"][user_id]["boot_ids"].append(user_id)
 
-    _dump(members)
+    _dump(name="members", data=members)
 
-    bot.send_message(chat_id=config["GROUPS"]["admin"], text="The signup list and results list have been reset.")
+    signups = {}
+    _dump(name="signups", data=signups)
+
+    bot.send_message(chat_id=config["GROUPS"]["admin"], text="The signup list and members list has been reset.")
 
 
 def kick(update, context):
