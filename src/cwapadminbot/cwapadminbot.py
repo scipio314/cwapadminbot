@@ -17,6 +17,25 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           ConversationHandler, Filters, MessageHandler,
                           Updater)
 from telegram.utils.helpers import escape_markdown
+# !/usr/bin/env python3
+import datetime
+import logging
+import pickle
+import shutil
+import time
+from random import choice, randint
+
+import gspread
+import repackage
+import requests
+import yaml
+from oauth2client.service_account import ServiceAccountCredentials
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (CallbackQueryHandler, CommandHandler,
+                          ConversationHandler, Filters, MessageHandler,
+                          Updater)
+from telegram.utils.helpers import escape_markdown
+
 repackage.up(2)
 from src.cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump
 
@@ -787,8 +806,8 @@ def sheet(update, context):
     signup_cell_list = signup_ws.range('A1:A150')
 
     i = 0
-    for signup_entry in signups:
-        signup_cell_list[i].value = signup_entry["CSV"]
+    for signup_id in signups:
+        signup_cell_list[i].value = signups[signup_id]["CSV"]
         i += 1
 
     while i < 150:
@@ -841,8 +860,8 @@ def autosheet(context):
     signup_cell_list = signup_ws.range('A1:A150')
 
     i = 0
-    for signup_entry in signups:
-        signup_cell_list[i].value = signup_entry["CSV"]
+    for signup_id in signups:
+        signup_cell_list[i].value = signups[signup_id]["CSV"]
         i += 1
 
     while i < 150:
