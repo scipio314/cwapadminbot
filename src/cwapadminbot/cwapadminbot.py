@@ -1,4 +1,5 @@
 """A telegram bot to efficiently run Crab Wiv a Plan."""
+#!/usr/bin/env python3
 import datetime
 import logging
 import pickle
@@ -6,6 +7,7 @@ import shutil
 import time
 from random import choice, randint
 
+import repackage
 import gspread
 import requests
 import yaml
@@ -15,7 +17,7 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           ConversationHandler, Filters, MessageHandler,
                           Updater)
 from telegram.utils.helpers import escape_markdown
-
+repackage.up(2)
 from src.cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
