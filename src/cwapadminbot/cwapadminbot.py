@@ -1,5 +1,5 @@
 """A telegram bot to efficiently run Crab Wiv a Plan."""
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 import datetime
 import logging
 import pickle
@@ -7,8 +7,8 @@ import shutil
 import time
 from random import choice, randint
 
-import repackage
 import gspread
+import repackage
 import requests
 import yaml
 from oauth2client.service_account import ServiceAccountCredentials
@@ -17,6 +17,7 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           ConversationHandler, Filters, MessageHandler,
                           Updater)
 from telegram.utils.helpers import escape_markdown
+
 repackage.up(2)
 from src.cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump
 
@@ -787,8 +788,8 @@ def sheet(update, context):
     signup_cell_list = signup_ws.range('A1:A150')
 
     i = 0
-    for signup_entry in signups:
-        signup_cell_list[i].value = signup_entry["CSV"]
+    for signup_id in signups:
+        signup_cell_list[i].value = signups[signup_id]["CSV"]
         i += 1
 
     while i < 150:
@@ -841,8 +842,8 @@ def autosheet(context):
     signup_cell_list = signup_ws.range('A1:A150')
 
     i = 0
-    for signup_entry in signups:
-        signup_cell_list[i].value = signup_entry["CSV"]
+    for signup_id in signups:
+        signup_cell_list[i].value = signups[signup_id]["CSV"]
         i += 1
 
     while i < 150:
@@ -1052,16 +1053,19 @@ def resetlists(update, context):
 
     time_stamp = str(int(time.time()))
     shutil.copy('./data/members.txt', './data/members - ' + time_stamp + '.txt')
+    shutil.copy('./data/signups.txt', './data/signups - ' + time_stamp + '.txt')
 
-    for member in members["users"]:
-        user_id = members["users"][user_id]["user_id"]
+    for user_id in members["users"]:
         members["users"][user_id]["signed_up"] = False
         members["users"][user_id]["signup_data"] = []
         members["users"][user_id]["boot_ids"].append(user_id)
 
-    _dump(members)
+    _dump(name="members", data=members)
 
-    bot.send_message(chat_id=config["GROUPS"]["admin"], text="The signup list and results list have been reset.")
+    signups = {}
+    _dump(name="signups", data=signups)
+
+    bot.send_message(chat_id=config["GROUPS"]["admin"], text="The signup list and members list has been reset.")
 
 
 def kick(update, context):

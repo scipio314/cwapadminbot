@@ -104,6 +104,12 @@ def migrate_members():
     return new_members
 
 
+def reset_signups():
+    signups = {}
+    with open("../data/signups.txt", "wb") as file:
+        pickle.dump(signups, file)
+
+
 def migrate_signups():
     """Migrate old signup format to the new one."""
     old_signups = load_list(list="signuplist")
@@ -140,3 +146,4 @@ def migrate_signups():
 
 if __name__ == '__main__':
     migrate_members()
+    reset_signups()
