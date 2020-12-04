@@ -135,3 +135,21 @@ def _in_group(context, user_id, group_id):
         return False
     member_status = ['creator', 'administrator', 'member']
     return status in member_status
+
+
+def _authorized(user_id):
+    members = loadlists()["members"]
+    try:
+        authorized = members["users"][user_id]["authorized"]
+    except KeyError:
+        authorized = False
+    return authorized
+
+
+def _admin(user_id):
+    members = loadlists()["members"]
+    try:
+        admin = members["users"][user_id]["is_admin"]
+    except KeyError:
+        admin = False
+    return admin

@@ -19,7 +19,8 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler,
 from telegram.utils.helpers import escape_markdown
 
 repackage.up(2)
-from src.cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump
+from src.cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump, \
+    _authorized, _admin
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -30,6 +31,14 @@ with open('config.yaml', 'r') as file:
 updater = Updater(token=config["TOKEN"], use_context=True)
 dp = updater.dispatcher
 j = updater.job_queue
+
+
+def _startup_message(owner_id):
+    """A function to run at startup of the bot. A reminder message is sent to the bot owner."""
+    from telegram import Bot
+    bot = Bot(token=config["TOKEN"])
+    bot.send_message(chat_id=owner_id,
+                     text="I've been restarted please set the boot date.")
 
 
 def _unauthorized_message(bot, user_id, username):
@@ -52,6 +61,54 @@ def _translate(messages, language_code):
         the_message = messages[language_code]
     except KeyError:
         the_message = messages["en"]
+    return the_message
+
+
+def _available_commands(user_id):
+    admin = _admin(user_id)
+    overlord = user_id in config["OVERLORDS"]
+    member_commands = "**Commands**\n\n" \
+                      "`/signup`: Signup for the next Mega Crab.\n\n" \
+                      "`/performance`: Sends a link to a Google Docs sheet to check how well your pacing compared to " \
+                      "other members\n\n" \
+                      "`/feedback`: Submit feedback to the Admin team.\n\n" \
+                      "`/ping`: Sends back a message.\n\n" \
+                      "`/quote`: Sends you a random quote from Game of Thrones."
+
+    admin_commands = member_commands + "\n\n**Admin Only Commands**\n\n" \
+                                       "`/signupstatus`: Returns the current list of members that aren't signed up" \
+                                       "for Mega Crab." \
+                                       "`/roster`: Send a link to the roster Google Doc sheet." \
+                                       "`/sheet`: Update the roster spreadsheet." \
+                                       "`/joinrequest A B C`: Add/remove members to waitlist. Click /joinrequest for " \
+                                       "more.\n\n" \
+                                       "`/waitlist`: returns the current members interested joining CWAP.\n\n" \
+                                       "`/closesignup`: Close Mega Crab Signups.\n\n" \
+                                       "`/opensignup`: Open signups for Mega Crab\n\n" \
+                                       "`/setautoboot Y M D H`: Set the year (Y), month (M), day (D), and hour (H) " \
+                                       "for when the bot will autokick un-signedup up members.\n\n" \
+                                       "`/checkboot`: Sends back when the current day and time the bot will kick " \
+                                       "members that aren't signed up.\n\n" \
+                                       "`/kick`: Use as a reply to a message of a member you want to kick. Bot " \
+                                       "removes member from the group the command is used in.\n\n" \
+                                       "`/superkick`: Use as a reply to a message of a member you want gone from " \
+                                       "every Mega Crab group."
+
+    overlord_commands = admin_commands + "\n\n**Overlord Commands**\n\n" \
+                                         "`/offline`: Sends a message to all groups letting everyone know the bot " \
+                                         "is offline.\n\n" \
+                                         "`/online`: Sends a message to all groups letting everyone know the bot" \
+                                         "is back online.\n\n" \
+                                         "`/resetlists`: Resets all lists and starts new for the next Mega Crab.\n\n" \
+                                         "`/action`: A fun command to send a random bot action to the main group." \
+                                         "`/say`: Use to have the bot execute any code."
+
+    if overlord:
+        the_message = overlord_commands
+    elif admin:
+        the_message = admin_commands
+    else:
+        the_message = member_commands
     return the_message
 
 
@@ -139,8 +196,7 @@ def start(update, context):
     chat_id = update.message.chat_id
 
     tutorial_id = config["GROUPS"]["tutorial"]
-    lists = loadlists()
-    authorized = lists["members"]["users"][user_id]["authorized"]
+    authorized = _authorized(user_id)
     tutorial_status = bot.get_chat_member(tutorial_id, user_id).status
     authorized_status = config["STATUS"]["authorized"]
 
@@ -173,8 +229,7 @@ def ping(update, context):
     username = update.message.from_user.name
     user_id = update.message.from_user.id
 
-    lists = loadlists()
-    authorized = lists["members"]["users"][user_id]["authorized"]
+    authorized = _authorized(user_id)
 
     if not authorized:
         return _unauthorized_message(bot, user_id, username)
@@ -193,43 +248,16 @@ def help(update, context):
     username = update.message.from_user.name
     user_id = update.message.from_user.id
 
-    lists = loadlists()
-    authorized = lists["members"]["users"][user_id]["authorized"]
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    authorized = _authorized(user_id)
 
     if not authorized:
-        _unauthorized_message(bot, user_id, username)
+        return _unauthorized_message(bot, user_id, username)
 
-    elif admin:
-        bot.send_message(chat_id=user_id,
-                         text="*The commands available to admin are:*\n\n"
-                              "`/joinrequest A B C`: Add/remove members to waitlist. Click /joinrequest for more.\n\n"
-                              "`/waitlist`: returns the current members interested joining CWAP.\n\n"
-                              "*Commands available to all users are:*\n\n"
-                              "`/ping`: returns Pong!\n\n"
-                              "`/signup A B C D`: Signup for next mega crab! Click /signup for more.\n\n"
-                              "`/editsignup A B C D E`: Use to edit signup details. Click /editsignup for more.\n\n"
-                              "`/removesignup A`: Remove an account (A) from signup. Click /removesignup for more.\n\n"
-                              "`/checksignup`: Checks which accounts you have signed up for mega crab.\n\n",
-                         parse_mode="markdown")
+    the_message = _available_commands(user_id)
 
-    else:
-        bot.send_message(chat_id=user_id,
-                         text="*Commands available to all users are:*\n\n"
-                              "`/ping`: returns Pong!\n\n"
-                              "`/signup A B C D`: Signup for next mega crab! Click /signup for more.\n\n"
-                              "`/editsignup A B C D E`: Use to edit signup details. Click /editsignup for more.\n\n"
-                              "`/removesignup A`: Remove an account (A) from signup. Click /removesignup for more.\n\n"
-                              "`/checksignup`: Checks which accounts you have signed up for mega crab.\n\n"
-                              "`/submitresults A B C D`: Submit results from previous Mega Crab\n\n"
-                              "`/editresults A B C D E`: Edit your results from previous Mega Crab\n\n"
-                              "`/removeresults A`: Remove your Mega Crab Results\n\n"
-                              "`/checkresults`: Check the results that you've submitted for Mega Crab\n\n"
-                              "`/feedback`: Submit any feedback to the Admins about the group.",
-                         parse_mode="markdown")
-
-    bot.delete_message(chat_id=update.message.chat_id,
-                       message_id=update.message.message_id)
+    bot.send_message(chat_id=user_id,
+                     text=the_message,
+                     parse_mode="MARKDOWN")
 
 
 def joinrequest(update, context):
@@ -241,7 +269,7 @@ def joinrequest(update, context):
     user_id = update.message.from_user.id
 
     lists = loadlists()
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
     joinrequests = lists["joinrequests"]
 
     if not admin:
@@ -295,7 +323,7 @@ def waitlist(update, context):
     username = update.message.from_user.name
 
     lists = loadlists()
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
     joinrequests = lists["joinrequests"]
 
     if not admin:
@@ -363,7 +391,6 @@ def signup(update, context):
     Conversation asks the user for their "in game name", if they'd like to volunteer recording videos,
     and then sends a confirmation button."""
     bot = context.bot
-    lists = loadlists()
 
     username = update.message.from_user.name
     user_id = update.message.from_user.id
@@ -372,7 +399,7 @@ def signup(update, context):
     chat_id = update.message.chat_id
     user_data = context.user_data
 
-    authorized = lists["members"]["users"][user_id]["authorized"]
+    authorized = _authorized(user_id)
     tutorial = _in_group(context, user_id, config["GROUPS"]["tutorial"])
 
     if not authorized and not tutorial:
@@ -596,7 +623,7 @@ def bootreminder(context):
     boot_ids = lists["members"]["boot_ids"]
 
     for user_id in boot_ids:
-        admin = lists["members"]["users"][user_id]["is_admin"]
+        admin = _admin(user_id)
         if not admin:
             time.sleep(1)
             try:
@@ -630,7 +657,7 @@ def autoboot(context):
     boot_ids = lists["members"]["boot_ids"]
 
     for user_id in boot_ids:
-        admin = members["users"][user_id]["is_admin"]
+        admin = _admin(user_id)
 
         in_cwap = _in_group(context, user_id, config["GROUPS"]["crab_wiv_a_plan"])
         in_videostars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
@@ -677,8 +704,7 @@ def action(update, context):
     user_id = update.message.from_user.id
     username = update.message.from_user.name
 
-    lists = loadlists()
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -698,7 +724,7 @@ def feedback(update, context):
     username = update.message.from_user.name
 
     lists = loadlists()
-    authorized = lists["members"]["users"][user_id]["authorized"]
+    authorized = _authorized(user_id)
     feedbacklist = lists["feedback"]
 
     if not authorized:
@@ -731,7 +757,7 @@ def checkfeedback(update, context):
 
     lists = loadlists()
     all_feedback = lists["feedback"]
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -886,8 +912,7 @@ def plot(update, context):
     username = update.message.from_user.name
     text = update.message.text
 
-    lists = loadlists()
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -936,8 +961,7 @@ def roster(update, context):
     username = update.message.from_user.name
     chat_id = update.message.chat_id
 
-    lists = loadlists()
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -960,8 +984,7 @@ def performance(update, context):
     username = update.message.from_user.name
     chat_id = update.message.chat_id
 
-    lists = loadlists()
-    authorized = lists["members"]["users"][user_id]["authorized"]
+    authorized = _authorized(user_id)
 
     if not authorized:
         return _unauthorized_message(bot, user_id, username)
@@ -992,7 +1015,7 @@ def signupstatus(update, context):
     chat_id = update.message.chat_id
 
     lists = loadlists()
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -1077,8 +1100,7 @@ def kick(update, context):
     chat_name = update.message.chat.title
     username = update.message.reply_to_message.from_user.name
 
-    lists = loadlists()
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -1115,8 +1137,7 @@ def superkick(update, context):
     boot_id = update.message.reply_to_message.from_user.id
     username = update.message.reply_to_message.from_user.name
 
-    lists = loadlists()
-    admin = lists["members"]["users"][user_id]["is_admin"]
+    admin = _admin(user_id)
 
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
@@ -1229,6 +1250,8 @@ def main():
                                   ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
     dp.add_handler(CommandHandler('action', action, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
     dp.add_handler(CommandHandler('say', say, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
+
+    _startup_message(config["OVERLORDS"][0])
 
     # Repeating jobs
     j.run_repeating(autosheet, 60, first=30)
