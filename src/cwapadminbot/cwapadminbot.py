@@ -91,6 +91,7 @@ def _available_commands(user_id):
                                        "for when the bot will autokick un-signedup up members.\n\n" \
                                        "`/checkboot`: Sends back when the current day and time the bot will kick " \
                                        "members that aren't signed up.\n\n" \
+                                       "`/action`: A fun command to send a random bot action to the main group.\n\n" \
                                        "`/kick`: Use as a reply to a message of a member you want to kick. Bot " \
                                        "removes member from the group the command is used in.\n\n" \
                                        "`/superkick`: Use as a reply to a message of a member you want gone from " \
@@ -102,7 +103,6 @@ def _available_commands(user_id):
                                          "`/online`: Sends a message to all groups letting everyone know the bot" \
                                          "is back online.\n\n" \
                                          "`/resetlists`: Resets all lists and starts new for the next Mega Crab.\n\n" \
-                                         "`/action`: A fun command to send a random bot action to the main group.\n\n" \
                                          "`/say`: Use to have the bot execute any code."
 
     if overlord:
