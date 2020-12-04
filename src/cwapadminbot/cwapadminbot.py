@@ -57,6 +57,7 @@ def _for_admin_only_message(bot, user_id, username):
 
 
 def _translate(messages, language_code):
+    """Helper function to assist in handling multiple translations of a message."""
     try:
         the_message = messages[language_code]
     except KeyError:
@@ -65,21 +66,22 @@ def _translate(messages, language_code):
 
 
 def _available_commands(user_id):
+    """Sends user a message of the available bot commands to them."""
     admin = _admin(user_id)
     overlord = user_id in config["OVERLORDS"]
     member_commands = "**Commands**\n\n" \
                       "`/signup`: Signup for the next Mega Crab.\n\n" \
                       "`/performance`: Sends a link to a Google Docs sheet to check how well your pacing compared to " \
-                      "other members\n\n" \
+                      "other members.\n\n" \
                       "`/feedback`: Submit feedback to the Admin team.\n\n" \
                       "`/ping`: Sends back a message.\n\n" \
                       "`/quote`: Sends you a random quote from Game of Thrones."
 
     admin_commands = member_commands + "\n\n**Admin Only Commands**\n\n" \
                                        "`/signupstatus`: Returns the current list of members that aren't signed up" \
-                                       "for Mega Crab." \
-                                       "`/roster`: Send a link to the roster Google Doc sheet." \
-                                       "`/sheet`: Update the roster spreadsheet." \
+                                       "for Mega Crab.\n\n" \
+                                       "`/roster`: Send a link to the roster Google Doc sheet.\n\n" \
+                                       "`/sheet`: Update the roster spreadsheet.\n\n" \
                                        "`/joinrequest A B C`: Add/remove members to waitlist. Click /joinrequest for " \
                                        "more.\n\n" \
                                        "`/waitlist`: returns the current members interested joining CWAP.\n\n" \
@@ -100,7 +102,7 @@ def _available_commands(user_id):
                                          "`/online`: Sends a message to all groups letting everyone know the bot" \
                                          "is back online.\n\n" \
                                          "`/resetlists`: Resets all lists and starts new for the next Mega Crab.\n\n" \
-                                         "`/action`: A fun command to send a random bot action to the main group." \
+                                         "`/action`: A fun command to send a random bot action to the main group.\n\n" \
                                          "`/say`: Use to have the bot execute any code."
 
     if overlord:
