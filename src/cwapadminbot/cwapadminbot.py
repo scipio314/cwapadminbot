@@ -69,7 +69,7 @@ def _available_commands(user_id):
     """Sends user a message of the available bot commands to them."""
     admin = _admin(user_id)
     overlord = user_id in config["OVERLORDS"]
-    member_commands = "**Commands**\n\n" \
+    member_commands = "*Commands*\n\n" \
                       "`/signup`: Signup for the next Mega Crab.\n\n" \
                       "`/performance`: Sends a link to a Google Docs sheet to check how well your pacing compared to " \
                       "other members.\n\n" \
@@ -77,7 +77,7 @@ def _available_commands(user_id):
                       "`/ping`: Sends back a message.\n\n" \
                       "`/quote`: Sends you a random quote from Game of Thrones."
 
-    admin_commands = member_commands + "\n\n**Admin Only Commands**\n\n" \
+    admin_commands = member_commands + "\n\n*Admin Only Commands*\n\n" \
                                        "`/signupstatus`: Returns the current list of members that aren't signed up" \
                                        "for Mega Crab.\n\n" \
                                        "`/roster`: Send a link to the roster Google Doc sheet.\n\n" \
@@ -96,7 +96,7 @@ def _available_commands(user_id):
                                        "`/superkick`: Use as a reply to a message of a member you want gone from " \
                                        "every Mega Crab group."
 
-    overlord_commands = admin_commands + "\n\n**Overlord Commands**\n\n" \
+    overlord_commands = admin_commands + "\n\n*Overlord Commands*\n\n" \
                                          "`/offline`: Sends a message to all groups letting everyone know the bot " \
                                          "is offline.\n\n" \
                                          "`/online`: Sends a message to all groups letting everyone know the bot" \
