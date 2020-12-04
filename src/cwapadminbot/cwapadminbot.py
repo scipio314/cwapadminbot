@@ -1243,6 +1243,7 @@ def main():
     dp.add_handler(CommandHandler('signupstatus', signupstatus, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('kick', kick, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('superkick', superkick, (~Filters.update.edited_message)))
+    dp.add_handler(CommandHandler('action', action, ~Filters.update.edited_message))
 
     # Overlord commands
     dp.add_handler(CommandHandler('offline', offline,
@@ -1250,7 +1251,6 @@ def main():
     dp.add_handler(CommandHandler('online', online, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
     dp.add_handler(CommandHandler('resetlists', resetlists,
                                   ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
-    dp.add_handler(CommandHandler('action', action, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
     dp.add_handler(CommandHandler('say', say, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
 
     _startup_message(config["OVERLORDS"][0])
