@@ -5,6 +5,7 @@ import logging
 import pickle
 import shutil
 import time
+import calendar
 from random import choice, randint
 
 import gspread
@@ -37,8 +38,74 @@ def _startup_message(owner_id):
     """A function to run at startup of the bot. A reminder message is sent to the bot owner."""
     from telegram import Bot
     bot = Bot(token=config["TOKEN"])
+
+    possible_dates = _possible_crab_dates()
+
+    date_markup = _date_keyboard(possible_dates)
+
     bot.send_message(chat_id=owner_id,
-                     text="I've been restarted please set the boot date.")
+                     text="I've been restarted please set the start date of next Mega Crab.",
+                     reply_markup=date_markup)
+
+
+def _possible_crab_dates():
+    month = datetime.datetime.today().month
+    year = datetime.datetime.today().year
+
+    last_friday = max(week[calendar.FRIDAY]
+                      for week in calendar.monthcalendar(year, month))
+
+    last_friday = datetime.datetime(year=year, month=month, day=last_friday, hour=10)
+    day_one = last_friday - datetime.timedelta(days=7)
+    day_two = last_friday
+    day_three = last_friday + datetime.timedelta(days=7)
+
+    day_one_fmt = day_one.strftime('%b %d, %Y')
+    day_two_fmt = day_two.strftime('%b %d, %Y')
+    day_three_fmt = day_three.strftime('%b %d, %Y')
+    possible_crab_dates = {
+        "1": {
+            "formatted": day_one_fmt,
+            "datetime": day_one,
+        },
+        "2": {
+            "formatted": day_two_fmt,
+            "datetime": day_two,
+        },
+        "3": {
+            "formatted": day_three_fmt,
+            "datetime": day_three,
+        }
+    }
+    return possible_crab_dates
+
+
+def _date_keyboard(possible_dates):
+    date_keyboard = [
+        [InlineKeyboardButton(possible_dates["1"]["formatted"], callback_data='1'),
+         InlineKeyboardButton(possible_dates["2"]["formatted"], callback_data='2'),
+         InlineKeyboardButton(possible_dates["3"]["formatted"], callback_data='3')]]
+    date_markup = InlineKeyboardMarkup(date_keyboard)
+    return date_markup
+
+
+def _process_crab_date(update, context):
+    bot = context.bot
+    query = update.callback_query
+    user_choice = query.data
+    global boot_day_fmt
+
+    boot_day = _possible_crab_dates()[user_choice]["datetime"] - datetime.timedelta(days=4)
+    warning_day = boot_day - datetime.timedelta(days=1)
+    boot_day_fmt = boot_day.strftime('%b %d, %Y')
+
+    bot.send_message(chat_id=config["OVERLORDS"][0],
+                     text="I have been programmed to boot non-push members from CWAP on {}. "
+                          "A warning message will be sent 24 hours in advance."
+                     .format(_possible_crab_dates()[user_choice]["formatted"]))
+
+    j.run_once(bootreminder, warning_day)
+    j.run_once(autoboot, boot_day)
 
 
 def _unauthorized_message(bot, user_id, username):
@@ -568,7 +635,7 @@ def online(update, context):
 def checkboot(update, context):
     """Check the date and time non-signup members are booted using /checkboot command."""
     bot = context.bot
-    global boot_date_fmt
+    global boot_day_fmt
     user_id = update.message.from_user.id
 
     overlord_members = config["OVERLORDS"]
@@ -576,44 +643,16 @@ def checkboot(update, context):
     if user_id not in overlord_members:
         return
 
-    bot.send_message(chat_id=user_id,
-                     text="I have been programmed to boot members on {}".format(boot_date_fmt))
+    try:
+        bot.send_message(chat_id=user_id,
+                         text="I have been programmed to boot members on {}".format(boot_day_fmt))
 
-
-def setautoboot(update, context):
-    """Set the day the bot kicks non-signup members with /setautoboot command."""
-    bot = context.bot
-    args = context.args
-    global boot_date_fmt
-    user_id = update.message.from_user.id
-
-    overlord_members = config["OVERLORDS"]
-
-    if user_id not in overlord_members:
-        return
-
-    year = int(args[0])
-    month = int(args[1])
-    day = int(args[2])
-    reminder_day = int(day - 1)
-    hour = int(args[3])
-
-    reminder_date = datetime.datetime(year, month, reminder_day, hour, 0, 0, 0)
-    boot_date = datetime.datetime(year, month, day, hour, 0, 0, 0)
-
-    boot_month = boot_date.strftime('%B')
-    boot_day = boot_date.strftime('%-d')
-    boot_hour = boot_date.strftime('%-I')
-    am_pm = boot_date.strftime('%p')
-    boot_date_fmt = '{} {} at {} {} UTC'.format(boot_month, boot_day, boot_hour, am_pm)
-
-    bot.send_message(chat_id=user_id,
-                     text="I have been programmed to boot non-push members from CWAP on {}. "
-                          "A warning message will be sent 24 hours in advance."
-                     .format(boot_date_fmt))
-
-    j.run_once(bootreminder, reminder_date)
-    j.run_once(autoboot, boot_date)
+    except NameError:
+        possible_dates = _possible_crab_dates()
+        date_markup = _date_keyboard(possible_dates)
+        bot.send_message(chat_id=user_id,
+                         text="I don't have a scheduled boot date. Choose below.",
+                         reply_markup=date_markup)
 
 
 def bootreminder(context):
@@ -1235,7 +1274,6 @@ def main():
     dp.add_handler(CommandHandler('closesignup', closesignup, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('opensignup', opensignup, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('checkboot', checkboot, (~Filters.update.edited_message)))
-    dp.add_handler(CommandHandler('setautoboot', setautoboot, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('checkfeedback', checkfeedback, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('sheet', sheet, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('plot', plot, (~Filters.update.edited_message)))
@@ -1252,6 +1290,8 @@ def main():
     dp.add_handler(CommandHandler('resetlists', resetlists,
                                   ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
     dp.add_handler(CommandHandler('say', say, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
+    dp.add_handler(CallbackQueryHandler(_process_crab_date,
+                                        ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
 
     _startup_message(config["OVERLORDS"][0])
 
