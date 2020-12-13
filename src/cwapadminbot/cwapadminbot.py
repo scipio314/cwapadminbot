@@ -52,6 +52,11 @@ def _startup_message(owner_id):
 
 
 def _possible_crab_dates(month, year):
+    """Calculates possible crab dates for any given month and year.
+
+    :returns
+    A dictionary of possible crab dates.
+    """
     last_friday = max(week[calendar.FRIDAY]
                       for week in calendar.monthcalendar(year, month))
 
@@ -89,6 +94,7 @@ def _possible_crab_dates(month, year):
 
 
 def _date_keyboard(possible_dates):
+    """Creates a keyboard of possible crab dates."""
     date_keyboard = [
         [InlineKeyboardButton(possible_dates["1"]["formatted"], callback_data=possible_dates["1"]["string"]),
          InlineKeyboardButton(possible_dates["2"]["formatted"], callback_data=possible_dates["2"]["string"]),
@@ -98,6 +104,7 @@ def _date_keyboard(possible_dates):
 
 
 def _start_autoboot(crab_start_date, bot):
+    """Start the autoboot command."""
     global boot_day_fmt
 
     boot_day = crab_start_date - datetime.timedelta(days=4)
@@ -114,6 +121,7 @@ def _start_autoboot(crab_start_date, bot):
 
 
 def _process_crab_date(update, context):
+    """Process the users button press to set boot day."""
     bot = context.bot
     query = update.callback_query
     user_choice = query.data
