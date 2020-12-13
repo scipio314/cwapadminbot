@@ -4,3 +4,4 @@ requests
 pyaml
 oauth2client
 repackage
+python-dateutil

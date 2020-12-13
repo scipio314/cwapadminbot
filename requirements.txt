@@ -17,11 +17,12 @@ pyaml==19.12.0            # via -r requirements.in (line 4)
 pyasn1-modules==0.2.8     # via oauth2client
 pyasn1==0.4.8             # via oauth2client, pyasn1-modules, rsa
 pycparser==2.19           # via cffi
+python-dateutil==2.8.1    # via -r requirements.in (line 7)
 python-telegram-bot==12.3.0  # via -r requirements.in (line 1)
 pyyaml==5.2               # via pyaml
 repackage==0.7.3          # via -r requirements.in (line 6)
 requests==2.22.0          # via -r requirements.in (line 3), gspread
 rsa==4.0                  # via oauth2client
-six==1.13.0               # via cryptography, oauth2client
+six==1.13.0               # via cryptography, oauth2client, python-dateutil
 tornado==6.0.3            # via python-telegram-bot
 urllib3==1.25.8           # via requests

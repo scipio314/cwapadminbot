@@ -7,6 +7,7 @@ import shutil
 import time
 import calendar
 from random import choice, randint
+from dateutil.relativedelta import relativedelta
 
 import gspread
 import repackage
@@ -39,7 +40,9 @@ def _startup_message(owner_id):
     from telegram import Bot
     bot = Bot(token=config["TOKEN"])
 
-    possible_dates = _possible_crab_dates()
+    month = datetime.datetime.today().month
+    year = datetime.datetime.today().year
+    possible_dates = _possible_crab_dates(month, year)
 
     date_markup = _date_keyboard(possible_dates)
 
@@ -48,10 +51,7 @@ def _startup_message(owner_id):
                      reply_markup=date_markup)
 
 
-def _possible_crab_dates():
-    month = datetime.datetime.today().month
-    year = datetime.datetime.today().year
-
+def _possible_crab_dates(month, year):
     last_friday = max(week[calendar.FRIDAY]
                       for week in calendar.monthcalendar(year, month))
 
@@ -63,18 +63,26 @@ def _possible_crab_dates():
     day_one_fmt = day_one.strftime('%b %d, %Y')
     day_two_fmt = day_two.strftime('%b %d, %Y')
     day_three_fmt = day_three.strftime('%b %d, %Y')
+
+    day_one_str = "{}".format(day_one)
+    day_two_str = "{}".format(day_two)
+    day_three_str = "{}".format(day_three)
+
     possible_crab_dates = {
         "1": {
             "formatted": day_one_fmt,
             "datetime": day_one,
+            "string": day_one_str,
         },
         "2": {
             "formatted": day_two_fmt,
             "datetime": day_two,
+            "string": day_two_str,
         },
         "3": {
             "formatted": day_three_fmt,
             "datetime": day_three,
+            "string": day_three_str,
         }
     }
     return possible_crab_dates
@@ -82,30 +90,37 @@ def _possible_crab_dates():
 
 def _date_keyboard(possible_dates):
     date_keyboard = [
-        [InlineKeyboardButton(possible_dates["1"]["formatted"], callback_data='1'),
-         InlineKeyboardButton(possible_dates["2"]["formatted"], callback_data='2'),
-         InlineKeyboardButton(possible_dates["3"]["formatted"], callback_data='3')]]
+        [InlineKeyboardButton(possible_dates["1"]["formatted"], callback_data=possible_dates["1"]["string"]),
+         InlineKeyboardButton(possible_dates["2"]["formatted"], callback_data=possible_dates["2"]["string"]),
+         InlineKeyboardButton(possible_dates["3"]["formatted"], callback_data=possible_dates["3"]["string"])]]
     date_markup = InlineKeyboardMarkup(date_keyboard)
     return date_markup
+
+
+def _start_autoboot(crab_start_date, bot):
+    global boot_day_fmt
+
+    boot_day = crab_start_date - datetime.timedelta(days=4)
+    warning_day = boot_day - datetime.timedelta(days=1)
+    boot_day_fmt = boot_day.strftime('%b %d, %Y')
+
+    j.run_once(bootreminder, warning_day)
+    j.run_once(autoboot, boot_day)
+
+    bot.send_message(chat_id=config["OVERLORDS"][0],
+                     text="I have been programmed to boot non-push members from CWAP on {}. "
+                          "A warning message will be sent 24 hours in advance."
+                     .format(boot_day_fmt))
 
 
 def _process_crab_date(update, context):
     bot = context.bot
     query = update.callback_query
     user_choice = query.data
-    global boot_day_fmt
 
-    boot_day = _possible_crab_dates()[user_choice]["datetime"] - datetime.timedelta(days=4)
-    warning_day = boot_day - datetime.timedelta(days=1)
-    boot_day_fmt = boot_day.strftime('%b %d, %Y')
+    crab_start_date = datetime.datetime.strptime(user_choice, '%Y-%m-%d %H:%M:%S')
 
-    bot.send_message(chat_id=config["OVERLORDS"][0],
-                     text="I have been programmed to boot non-push members from CWAP on {}. "
-                          "A warning message will be sent 24 hours in advance."
-                     .format(_possible_crab_dates()[user_choice]["formatted"]))
-
-    j.run_once(bootreminder, warning_day)
-    j.run_once(autoboot, boot_day)
+    _start_autoboot(crab_start_date, bot)
 
 
 def _unauthorized_message(bot, user_id, username):
@@ -154,7 +169,7 @@ def _available_commands(user_id):
                                        "`/waitlist`: returns the current members interested joining CWAP.\n\n" \
                                        "`/closesignup`: Close Mega Crab Signups.\n\n" \
                                        "`/opensignup`: Open signups for Mega Crab\n\n" \
-                                       "`/setautoboot Y M D H`: Set the year (Y), month (M), day (D), and hour (H) " \
+                                       "`/setautoboot Y M D`: Set the year (Y), month (M), day (D), and hour (H) " \
                                        "for when the bot will autokick un-signedup up members.\n\n" \
                                        "`/checkboot`: Sends back when the current day and time the bot will kick " \
                                        "members that aren't signed up.\n\n" \
@@ -579,7 +594,6 @@ signup_handler = ConversationHandler(
     states={
         IGN: [MessageHandler(Filters.text, _signup_ign, pass_user_data=True)],
         VIDEOSTAR: [CallbackQueryHandler(_videostar, pass_user_data=True)],
-        # CONFIRMATION: [CallbackQueryHandler(_signup_confirmation, pass_user_data=True)],
         CONFIRMATION: [CallbackQueryHandler(_process_confirmation_button, pass_user_data=True)],
     },
     fallbacks=[CommandHandler('cancel', cancel)]
@@ -632,6 +646,35 @@ def online(update, context):
                      text="I am back online and ready for action.")
 
 
+def setautoboot(update, context):
+    """Manually set the day bot will boot members not signed up with the /setautoboot command."""
+    bot = context.bot
+    args = context.args
+    user_id = update.message.from_user.id
+    global boot_day_fmt
+
+    if user_id not in config["OVERLORDS"]:
+        return
+
+    year = int(args[0])
+    month = int(args[1])
+    day = int(args[2])
+    reminder_day = int(day - 1)
+
+    reminder_date = datetime.datetime(year, month, reminder_day, 10, 0, 0, 0)
+    boot_date = datetime.datetime(year, month, day, 10, 0, 0, 0)
+
+    boot_day_fmt = boot_date.strftime('%b %d, %Y')
+
+    j.run_once(bootreminder, reminder_date)
+    j.run_once(autoboot, boot_date)
+
+    bot.send_message(chat_id=user_id,
+                     text="I have been programmed to boot non-push members from CWAP on {}. "
+                          "A warning message will be sent 24 hours in advance."
+                     .format(boot_day_fmt))
+
+
 def checkboot(update, context):
     """Check the date and time non-signup members are booted using /checkboot command."""
     bot = context.bot
@@ -648,10 +691,13 @@ def checkboot(update, context):
                          text="I have been programmed to boot members on {}".format(boot_day_fmt))
 
     except NameError:
-        possible_dates = _possible_crab_dates()
+        month = datetime.datetime.today().month
+        year = datetime.datetime.today().year
+        possible_dates = _possible_crab_dates(month, year)
         date_markup = _date_keyboard(possible_dates)
         bot.send_message(chat_id=user_id,
-                         text="I don't have a scheduled boot date. Choose below.",
+                         text="I don't have a scheduled boot date. Choose below or use the command\n\n"
+                              "/setautoboot Y M D",
                          reply_markup=date_markup)
 
 
@@ -1101,10 +1147,11 @@ def signupstatus(update, context):
                        message_id=update.message.message_id)
 
 
-def resetlists(update, context):
-    """Copys current lists into an `Old` folder then clears all current lists with the /resetlists command."""
+def nextcrab(update, context):
+    """Copys current lists into an `Old` folder then clears all current lists with the /nextcrab command."""
     bot = context.bot
     user_id = update.message.from_user.id
+    chat_id = update.message.from_user.id
 
     overlord_members = config["OVERLORDS"]
 
@@ -1119,17 +1166,28 @@ def resetlists(update, context):
     shutil.copy('./data/members.txt', './data/members - ' + time_stamp + '.txt')
     shutil.copy('./data/signups.txt', './data/signups - ' + time_stamp + '.txt')
 
+    members["signup_ids"] = []
+    members["boot_ids"] = []
+
     for user_id in members["users"]:
         members["users"][user_id]["signed_up"] = False
         members["users"][user_id]["signup_data"] = []
-        members["users"][user_id]["boot_ids"].append(user_id)
+        members["boot_ids"].append(user_id)
 
     _dump(name="members", data=members)
 
     signups = {}
     _dump(name="signups", data=signups)
 
-    bot.send_message(chat_id=config["GROUPS"]["admin"], text="The signup list and members list has been reset.")
+    month = (relativedelta(days=+30) + datetime.datetime.today()).month
+    year = (relativedelta(days=+30) + datetime.datetime.today()).year
+    possible_dates = _possible_crab_dates(month, year)
+    date_markup = _date_keyboard(possible_dates)
+
+    bot.send_message(chat_id=chat_id,
+                     text="The signup list and members list has been reset.\n\n"
+                          "Select the date of next Mega Crab.",
+                     reply_markup=date_markup)
 
 
 def kick(update, context):
@@ -1287,11 +1345,13 @@ def main():
     dp.add_handler(CommandHandler('offline', offline,
                                   ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
     dp.add_handler(CommandHandler('online', online, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
-    dp.add_handler(CommandHandler('resetlists', resetlists,
+    dp.add_handler(CommandHandler('nextcrab', nextcrab,
                                   ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
     dp.add_handler(CommandHandler('say', say, ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
     dp.add_handler(CallbackQueryHandler(_process_crab_date,
                                         ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
+    dp.add_handler(CommandHandler('setautoboot', setautoboot,
+                                  ~Filters.update.edited_message & Filters.user(config["OVERLORDS"])))
 
     _startup_message(config["OVERLORDS"][0])
 
