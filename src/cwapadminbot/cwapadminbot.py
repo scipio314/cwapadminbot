@@ -1,18 +1,18 @@
 """A telegram bot to efficiently run Crab Wiv a Plan."""
+import calendar
 # !/usr/bin/env python3
 import datetime
 import logging
 import pickle
 import shutil
 import time
-import calendar
 from random import choice, randint
-from dateutil.relativedelta import relativedelta
 
 import gspread
 import repackage
 import requests
 import yaml
+from dateutil.relativedelta import relativedelta
 from oauth2client.service_account import ServiceAccountCredentials
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (CallbackQueryHandler, CommandHandler,
@@ -1104,7 +1104,7 @@ def performance(update, context):
 def signupstatus(update, context):
     """Returns a current list of members not signed up."""
     bot = context.bot
-    global boot_date_fmt
+    global boot_day_fmt
     user_id = update.message.from_user.id
     username = update.message.from_user.name
     chat_id = update.message.chat_id
@@ -1133,7 +1133,7 @@ def signupstatus(update, context):
             j += 1
 
     member_message = "A total of *{} commanders have not signed up for Mega Crab* and will be booted on *{}*.\n\n" \
-                     "Here is the full list of members to be removed:\n".format(i - 1, boot_date_fmt)
+                     "Here is the full list of members to be removed:\n".format(i - 1, boot_day_fmt)
     member_message += boot_users
     member_message += "\n\nUse the /signup command to register your account before you are booted!"
 
