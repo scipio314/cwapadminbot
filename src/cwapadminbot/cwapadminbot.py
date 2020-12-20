@@ -733,8 +733,10 @@ def bootreminder(context):
     i = 1
     the_message = 'The following have been warned to signup in the next 24 hours or get booted:\n'
     for user_id in boot_ids:
-        the_message += '\n{}) {}'.format(i, escape_markdown(members["users"][user_id]["username"]))
-        i += 1
+        admin = _admin(user_id)
+        if not admin:
+            the_message += '\n{}) {}'.format(i, escape_markdown(members["users"][user_id]["username"]))
+            i += 1
 
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
                      text=the_message, parse_mode='MARKDOWN')
@@ -783,8 +785,10 @@ def autoboot(context):
     i = 1
     the_message = "The following have been *AUTO KICKED* from Crab Wiv A Plan and Videostars.\n"
     for user_id in boot_ids:
-        the_message += "\n{}) {}".format(i, escape_markdown(members["users"][user_id]["username"]))
-        i += 1
+        admin = _admin(user_id)
+        if not admin:
+            the_message += "\n{}) {}".format(i, escape_markdown(members["users"][user_id]["username"]))
+            i += 1
 
     bot.send_message(chat_id=config["GROUPS"]["boot_channel"],
                      text=the_message, parse_mode='MARKDOWN')
