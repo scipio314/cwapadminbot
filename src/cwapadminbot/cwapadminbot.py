@@ -1,5 +1,5 @@
+#!/usr/bin/env python3
 """A telegram bot to efficiently run Crab Wiv a Plan."""
-# !/usr/bin/env python3
 import calendar
 import datetime
 import logging
