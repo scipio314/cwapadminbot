@@ -756,30 +756,31 @@ def autoboot(context):
     for user_id in boot_ids:
         admin = _admin(user_id)
 
-        in_cwap = _in_group(context, user_id, config["GROUPS"]["crab_wiv_a_plan"])
-        in_videostars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
+        if not admin:
+            in_cwap = _in_group(context, user_id, config["GROUPS"]["crab_wiv_a_plan"])
+            in_videostars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
 
-        if in_cwap and not admin:
-            bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
-            bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id,
-                                     can_send_messages=True,
-                                     can_send_media_messages=True,
-                                     can_add_web_page_previews=True,
-                                     can_send_other_messages=True)
+            if in_cwap:
+                bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
+                bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id,
+                                         can_send_messages=True,
+                                         can_send_media_messages=True,
+                                         can_add_web_page_previews=True,
+                                         can_send_other_messages=True)
 
-        if in_videostars and not admin:
-            bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
-            bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id,
-                                     can_send_messages=True,
-                                     can_send_media_messages=True,
-                                     can_add_web_page_previews=True,
-                                     can_send_other_messages=True)
+            if in_videostars:
+                bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
+                bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id,
+                                         can_send_messages=True,
+                                         can_send_media_messages=True,
+                                         can_add_web_page_previews=True,
+                                         can_send_other_messages=True)
 
-        bot.send_message(chat_id=user_id,
-                         text="Hey, we removed you from the crab group because you didn't sign up in time.\n\n"
-                              "Contact an admin to be put on our waitlist for next month.")
+            bot.send_message(chat_id=user_id,
+                             text="Hey, we removed you from the crab group because you didn't sign up in time.\n\n"
+                                  "Contact an admin to be put on our waitlist for next month.")
 
-        remove_member(user_id)
+            remove_member(user_id)
         time.sleep(2)
 
     i = 1
