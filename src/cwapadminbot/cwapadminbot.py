@@ -322,6 +322,11 @@ def ping(update, context):
     user_id = update.message.from_user.id
 
     authorized = _authorized(user_id)
+    cwap_member = _in_group(context, user_id, config["GROUPS"]["crab_wiv_a_plan"])
+
+    if cwap_member and not authorized:
+        add_member(username, user_id)
+        authorized = True
 
     if not authorized:
         return _unauthorized_message(bot, user_id, username)
