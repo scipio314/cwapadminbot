@@ -492,7 +492,12 @@ def signup(update, context):
     user_data = context.user_data
 
     authorized = _authorized(user_id)
+    cwap = _in_group(context, user_id, config["GROUPS"]["crab_wiv_a_plan"])
     tutorial = _in_group(context, user_id, config["GROUPS"]["tutorial"])
+
+    if not authorized and cwap:
+        add_member(username, user_id)
+        authorized = True
 
     if not authorized and not tutorial:
         return _unauthorized_message(bot, user_id, username)
