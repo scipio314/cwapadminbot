@@ -69,8 +69,9 @@ def remove_member(user_id):
     lists = loadlists()
     signups = lists["signups"]
     all_signup_ids = lists["signups"].keys()
+    users = lists["members"]["users"]
 
-    username = lists["members"]["users"][user_id]["username"]
+    username = users[user_id]["username"]
 
     lists["members"]["all_ids"].remove(user_id)
     lists["members"]["all_usernames"].remove(username)
@@ -86,9 +87,9 @@ def remove_member(user_id):
         signups = [signups.pop(signup_id, None) for signup_id in all_signup_ids if signup_id in user_signup_ids]
         lists["members"]["signup_ids"].remove(user_id)
 
-    members = lists["members"]["users"].pop(user_id, None)
+    users.pop(user_id, None)
 
-    _dump(name="members", data=members)
+    _dump(name="members", data=users)
     _dump(name="signups", data=signups)
 
 

@@ -58,3 +58,4 @@ src/cwapadminbot/data/*.txt
 
 # auth
 src/cwapadminbot/auth/*.json
+!/src/cwapadminbot/test_cwapadminbot.py
