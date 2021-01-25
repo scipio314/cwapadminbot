@@ -560,8 +560,8 @@ def _signup_confirmation(update, context):
     bot.edit_message_text(chat_id=user_id,
                           message_id=message_id,
                           text="Please Confirm the following submission:\n\n"
-                          "<code>IGN:</code> <b>{}</b> \n"
-                          "<code>Volunteer to Record:</code> <b>{}</b> \n\n"
+                               "<code>IGN:</code> <b>{}</b> \n"
+                               "<code>Volunteer to Record:</code> <b>{}</b> \n\n"
                           .format(user_data['IGN'], user_data['VIDEOSTAR'], ),
                           parse_mode='HTML',
                           reply_markup=confirmation_markup)
@@ -592,7 +592,7 @@ def _process_confirmation_button(update, context):
         bot.edit_message_text(chat_id=user_id,
                               message_id=message_id,
                               text="Thanks your signup has been saved.\n"
-                              "{} - {} CET".format(date_stamp, time_stamp))
+                                   "{} - {} CET".format(date_stamp, time_stamp))
 
     elif the_choice == 'Redo':
         bot.edit_message_text(chat_id=user_id,
@@ -1147,15 +1147,20 @@ def signupstatus(update, context):
             admin_users += "\n{}) {}".format(j, escape_markdown(username))
             j += 1
 
-    member_message = "A total of *{} commanders have not signed up for Mega Crab* and will be booted on *{}*.\n\n" \
-                     "Here is the full list of members to be removed:\n".format(i - 1, boot_day_fmt)
+    try:
+        member_message = "A total of *{} commanders have not signed up for Mega Crab* and will be booted on *{}*.\n\n" \
+                         "Here is the full list of members to be removed:\n".format(i - 1, boot_day_fmt)
+    except NameError:
+        member_message = "A total of *{} commanders have not signed up for Mega Crab* and will be booted on " \
+                         "*date not set*.\n\n" \
+                         "Here is the full list of members to be removed:\n".format(i - 1)
     member_message += boot_users
     member_message += "\n\nUse the /signup command to register your account before you are booted!"
 
     admin_message = "A total of *{} Admin have not signed up for Mega Crab*. " \
-                    "Signup if you plan to play Mega Crab.\n\n".format(j - 1)
+                    "Signup if you plan to play Mega Crab.\n".format(j - 1)
     admin_message += admin_users
-    admin_message += "Admin will not be booted, use the /signup command if you plan to play."
+    admin_message += "\n\nAdmin will not be booted, use the /signup command if you plan to play."
 
     bot.send_message(chat_id=user_id,
                      text=member_message, parse_mode='MARKDOWN')
