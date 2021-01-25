@@ -144,6 +144,30 @@ def migrate_signups():
     return new_members
 
 
+def reformat_members():
+    """Function to convert old members list to the new format."""
+    members_old = load_list('members')
+    members = {"users": {}, "all_ids": [], "all_usernames": [], "boot_ids": [], "signup_ids": []}
+
+    for user_id, user_data in members_old.items():
+        user = {user_id: user_data}
+        members["users"].update(user)
+        members["all_ids"].append(user_id)
+        members["all_usernames"].append(user_data["username"])
+
+        if not user_data["signed_up"]:
+            members["boot_ids"].append(user_id)
+
+        if user_data["signed_up"]:
+            members["signup_ids"].append(user_id)
+
+    with open("../data/members.txt", "wb") as file:
+        pickle.dump(members, file)
+
+    return members
+
+
 if __name__ == '__main__':
-    migrate_members()
-    reset_signups()
+    # migrate_members()
+    # reset_signups()
+    reformat_members()
