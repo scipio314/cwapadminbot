@@ -81,7 +81,7 @@ def remove_member(user_id):
 
     if user_id in lists["members"]["signup_ids"]:
         user_signup_ids = []
-        for signup in lists["members"][user_id]["signup_data"]:
+        for signup in lists["members"]["users"][user_id]["signup_data"]:
             user_signup_ids.append(signup["UUID"])
 
         signups = [signups.pop(signup_id, None) for signup_id in all_signup_ids if signup_id in user_signup_ids]
