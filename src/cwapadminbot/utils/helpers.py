@@ -69,27 +69,27 @@ def remove_member(user_id):
     lists = loadlists()
     signups = lists["signups"]
     all_signup_ids = lists["signups"].keys()
-    users = lists["members"]["users"]
+    members = lists["members"]
 
-    username = users[user_id]["username"]
+    username = members["users"][user_id]["username"]
 
-    lists["members"]["all_ids"].remove(user_id)
-    lists["members"]["all_usernames"].remove(username)
+    members["all_ids"].remove(user_id)
+    members["all_usernames"].remove(username)
 
-    if user_id in lists["members"]["boot_ids"]:
-        lists["members"]["boot_ids"].remove(user_id)
+    if user_id in members["boot_ids"]:
+        members["boot_ids"].remove(user_id)
 
-    if user_id in lists["members"]["signup_ids"]:
+    if user_id in members["signup_ids"]:
         user_signup_ids = []
-        for signup in lists["members"]["users"][user_id]["signup_data"]:
+        for signup in members["users"][user_id]["signup_data"]:
             user_signup_ids.append(signup["UUID"])
 
         signups = [signups.pop(signup_id, None) for signup_id in all_signup_ids if signup_id in user_signup_ids]
-        lists["members"]["signup_ids"].remove(user_id)
+        members["signup_ids"].remove(user_id)
 
-    users.pop(user_id, None)
+    members["users"].pop(user_id, None)
 
-    _dump(name="members", data=users)
+    _dump(name="members", data=members)
     _dump(name="signups", data=signups)
 
 

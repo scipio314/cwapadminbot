@@ -14,7 +14,7 @@ import requests
 import yaml
 from dateutil.relativedelta import relativedelta
 from oauth2client.service_account import ServiceAccountCredentials
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatPermissions, error
 from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           ConversationHandler, Filters, MessageHandler,
                           Updater)
@@ -762,6 +762,8 @@ def autoboot(context):
     lists = loadlists()
     members = lists["members"]
     boot_ids = lists["members"]["boot_ids"]
+    permissions = ChatPermissions(can_send_messages=True, can_send_polls=True, can_send_media_messages=True,
+                                  can_add_web_page_previews=True, can_send_other_messages=True)
 
     for user_id in boot_ids:
         admin = _admin(user_id)
@@ -773,22 +775,20 @@ def autoboot(context):
             if in_cwap:
                 bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
                 bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id,
-                                         can_send_messages=True,
-                                         can_send_media_messages=True,
-                                         can_add_web_page_previews=True,
-                                         can_send_other_messages=True)
+                                         permissions=permissions)
 
             if in_videostars:
                 bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
                 bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id,
-                                         can_send_messages=True,
-                                         can_send_media_messages=True,
-                                         can_add_web_page_previews=True,
-                                         can_send_other_messages=True)
+                                         permissions=permissions)
 
-            bot.send_message(chat_id=user_id,
-                             text="Hey, we removed you from the crab group because you didn't sign up in time.\n\n"
-                                  "Contact an admin to be put on our waitlist for next month.")
+            try:
+                bot.send_message(chat_id=user_id,
+                                 text="Hey, we removed you from the crab group because you didn't sign up in time.\n\n"
+                                      "Contact an admin to be put on our waitlist for next month.")
+            except error.Unauthorized:
+                remove_member(user_id)
+                continue
 
             remove_member(user_id)
         time.sleep(2)
@@ -1226,6 +1226,8 @@ def kick(update, context):
     boot_id = update.message.reply_to_message.from_user.id
     chat_name = update.message.chat.title
     username = update.message.reply_to_message.from_user.name
+    permissions = ChatPermissions(can_send_messages=True, can_send_polls=True, can_send_media_messages=True,
+                                  can_add_web_page_previews=True, can_send_other_messages=True)
 
     admin = _admin(user_id)
 
@@ -1234,10 +1236,7 @@ def kick(update, context):
 
     bot.kick_chat_member(chat_id=chat_id, user_id=boot_id)
     bot.restrict_chat_member(chat_id=chat_id, user_id=boot_id,
-                             can_send_messages=True,
-                             can_send_media_messages=True,
-                             can_add_web_page_previews=True,
-                             can_send_other_messages=True)
+                             permissions=permissions)
 
     if chat_id == config["GROUPS"]["tutorial"]:
 
@@ -1263,6 +1262,8 @@ def superkick(update, context):
     user_id = update.message.from_user.id
     boot_id = update.message.reply_to_message.from_user.id
     username = update.message.reply_to_message.from_user.name
+    permissions = ChatPermissions(can_send_messages=True, can_send_polls=True, can_send_media_messages=True,
+                                  can_add_web_page_previews=True, can_send_other_messages=True)
 
     admin = _admin(user_id)
 
@@ -1276,26 +1277,17 @@ def superkick(update, context):
     if in_crab_wap:
         bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id)
         bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id,
-                                 can_send_messages=True,
-                                 can_send_media_messages=True,
-                                 can_add_web_page_previews=True,
-                                 can_send_other_messages=True)
+                                 permissions=permissions)
 
     if in_tutorial:
         bot.kick_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id)
         bot.restrict_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id,
-                                 can_send_messages=True,
-                                 can_send_media_messages=True,
-                                 can_add_web_page_previews=True,
-                                 can_send_other_messages=True)
+                                 permissions=permissions)
 
     if in_video_stars:
         bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id)
         bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id,
-                                 can_send_messages=True,
-                                 can_send_media_messages=True,
-                                 can_add_web_page_previews=True,
-                                 can_send_other_messages=True)
+                                 permissions=permissions)
 
     remove_member(boot_id)
 
