@@ -1320,6 +1320,20 @@ def quote(update, context):
                        message_id=update.message.message_id)
 
 
+def sw(update, context):
+    """Sends a random quote from Star Wars when using the /sw command."""
+    bot = context.bot
+    response_json = requests.get("https://swquotesapi.digitaljedi.dk/api/SWQuote/RandomStarWarsQuote", verify=False,
+            headers={"Accept": "application/json"}).json()
+
+    the_quoute = response_json["content"]
+
+    bot.send_message(chat_id=update.message.chat_id, text='<code>"{}"</code>'.format(the_quoute),
+                     parse_mode="HTML")
+
+    bot.delete_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
+
+
 def say(update, context):
     """A command to help calling some methods from the API directly by Telegram."""
     bot = context.bot
@@ -1344,6 +1358,7 @@ def main():
     dp.add_handler(CommandHandler('replay', replay, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('performance', performance, (~Filters.update.edited_message)))
     dp.add_handler(CommandHandler('quote', quote, (~Filters.update.edited_message)))
+    dp.add_handler(CommandHandler('sw', sw, (~Filters.update.edited_message)))
     dp.add_handler(signup_handler)
 
     # Admin commands
