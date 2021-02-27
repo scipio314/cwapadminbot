@@ -773,14 +773,10 @@ def autoboot(context):
             in_videostars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
 
             if in_cwap:
-                bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
-                bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id,
-                                         permissions=permissions)
+                bot.unban_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
 
             if in_videostars:
-                bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
-                bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id,
-                                         permissions=permissions)
+                bot.unban_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
 
             try:
                 bot.send_message(chat_id=user_id,
@@ -1234,9 +1230,7 @@ def kick(update, context):
     if not admin:
         return _for_admin_only_message(bot, user_id, username)
 
-    bot.kick_chat_member(chat_id=chat_id, user_id=boot_id)
-    bot.restrict_chat_member(chat_id=chat_id, user_id=boot_id,
-                             permissions=permissions)
+    bot.unban_chat_member(chat_id=chat_id, user_id=boot_id)
 
     if chat_id == config["GROUPS"]["tutorial"]:
 
@@ -1275,19 +1269,13 @@ def superkick(update, context):
     in_video_stars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
 
     if in_crab_wap:
-        bot.kick_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id)
-        bot.restrict_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id,
-                                 permissions=permissions)
+        bot.unban_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=boot_id)
 
     if in_tutorial:
-        bot.kick_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id)
-        bot.restrict_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id,
-                                 permissions=permissions)
+        bot.unban_chat_member(chat_id=config["GROUPS"]["tutorial"], user_id=boot_id)
 
     if in_video_stars:
-        bot.kick_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id)
-        bot.restrict_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id,
-                                 permissions=permissions)
+        bot.unban_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=boot_id)
 
     remove_member(boot_id)
 
