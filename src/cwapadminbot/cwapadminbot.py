@@ -19,6 +19,7 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           ConversationHandler, Filters, MessageHandler,
                           Updater)
 from telegram.utils.helpers import escape_markdown
+import dl_translate as dlt
 
 repackage.up(2)
 from src.cwapadminbot.utils.helpers import add_member, loadlists, remove_member, signup_user, _in_group, _dump, \
@@ -33,6 +34,8 @@ with open('config.yaml', 'r') as file:
 updater = Updater(token=config["TOKEN"], use_context=True)
 dp = updater.dispatcher
 j = updater.job_queue
+
+mt = dlt.TranslationModel()
 
 
 def _startup_message(owner_id):
@@ -155,7 +158,7 @@ def _translate(messages, language_code):
     return the_message
 
 
-def _available_commands(user_id):
+def _available_commands(user_id, language_code):
     """Sends user a message of the available bot commands to them."""
     admin = _admin(user_id)
     overlord = user_id in config["OVERLORDS"]
@@ -201,6 +204,13 @@ def _available_commands(user_id):
         the_message = admin_commands
     else:
         the_message = member_commands
+
+    en_txt = the_message
+    tr_txt = mt.translate(en_txt, source=dlt.lang.ENGLISH, target=dlt.lang.TURKISH)
+
+    messages = {"en": en_txt, "tr": tr_txt, }
+    the_message = _translate(messages, language_code)
+
     return the_message
 
 
@@ -232,7 +242,7 @@ def welcome(update, context):
                   "Task force assignments will come at a later date." \
             .format(escape_markdown(username), escape_markdown(chat_name))
 
-        tr_text = ""
+        tr_text = mt.translate(en_text, source=dlt.lang.ENGLISH, target=dlt.lang.TURKISH)
 
     if chat_id == config["GROUPS"]["crab_wiv_a_plan"]:
 
@@ -241,7 +251,7 @@ def welcome(update, context):
                   "Mega Crab. Welcome. Take a look at our pinned message for the most up to date announcemnts." \
             .format(escape_markdown(username), escape_markdown(chat_name))
 
-        tr_text = ""
+        tr_text = mt.translate(en_text, source=dlt.lang.ENGLISH, target=dlt.lang.TURKISH)
 
         add_member(username, user_id)
 
@@ -253,7 +263,7 @@ def welcome(update, context):
                   "volunteering your time to help this group run. Even just 5 replays really helps!" \
             .format(escape_markdown(username), escape_markdown(chat_name))
 
-        tr_text = ""
+        tr_text = mt.translate(en_text, source=dlt.lang.ENGLISH, target=dlt.lang.TURKISH)
 
     messages = {
         "en": en_text,
@@ -344,13 +354,14 @@ def help(update, context):
     bot = context.bot
     username = update.message.from_user.name
     user_id = update.message.from_user.id
+    language_code = update.message.from_user.language_code
 
     authorized = _authorized(user_id)
 
     if not authorized:
         return _unauthorized_message(bot, user_id, username)
 
-    the_message = _available_commands(user_id)
+    the_message = _available_commands(user_id, language_code)
 
     bot.send_message(chat_id=user_id,
                      text=the_message,
