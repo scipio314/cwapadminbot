@@ -773,10 +773,16 @@ def autoboot(context):
             in_videostars = _in_group(context, user_id, config["GROUPS"]["video_stars"])
 
             if in_cwap:
-                bot.unban_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
+                try:
+                    bot.unban_chat_member(chat_id=config["GROUPS"]["crab_wiv_a_plan"], user_id=user_id)
+                except error.BadRequest:
+                    continue
 
             if in_videostars:
-                bot.unban_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
+                try:
+                    bot.unban_chat_member(chat_id=config["GROUPS"]["video_stars"], user_id=user_id)
+                except error.BadRequest:
+                    continue
 
             try:
                 bot.send_message(chat_id=user_id,
