@@ -49,7 +49,7 @@ requests==2.22.0
     # via
     #   -r requirements.in
     #   gspread
-rsa==4.0
+rsa==4.1
     # via oauth2client
 six==1.13.0
     # via
